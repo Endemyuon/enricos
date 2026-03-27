@@ -1,0 +1,112 @@
+@import "tailwindcss";
+
+:root {
+  --background: #ffffff;
+  --foreground: #171717;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #0a0a0a;
+    --foreground: #ededed;
+  }
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+/* Mitr Font Classes */
+.mitr-extralight {
+  font-family: "Mitr", sans-serif;
+  font-weight: 200;
+  font-style: normal;
+}
+
+.mitr-light {
+  font-family: "Mitr", sans-serif;
+  font-weight: 300;
+  font-style: normal;
+}
+
+.mitr-regular {
+  font-family: "Mitr", sans-serif;
+  font-weight: 400;
+  font-style: normal;
+}
+
+.mitr-medium {
+  font-family: "Mitr", sans-serif;
+  font-weight: 500;
+  font-style: normal;
+}
+
+.mitr-semibold {
+  font-family: "Mitr", sans-serif;
+  font-weight: 600;
+  font-style: normal;
+}
+
+.mitr-bold {
+  font-family: "Mitr", sans-serif;
+  font-weight: 700;
+  font-style: normal;
+}
+
+/* Red Scrollbar Design */
+.rewards-scrollable {
+  scrollbar-color: #dc2626 #f1f5f9;
+  scrollbar-width: thin;
+}
+
+.rewards-scrollable::-webkit-scrollbar {
+  width: 8px;
+}
+
+.rewards-scrollable::-webkit-scrollbar-track {
+  background: #f1f5f9;
+  border-radius: 10px;
+}
+
+.rewards-scrollable::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.3);
+}
+
+.rewards-scrollable::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, #f87171 0%, #ef4444 100%);
+}
+
+/* Professional Admin Table Scrollbar */
+.admin-table-scrollable {
+  scrollbar-color: #dc2626 #f8fafc;
+  scrollbar-width: thin;
+}
+
+.admin-table-scrollable::-webkit-scrollbar {
+  height: 8px;
+}
+
+.admin-table-scrollable::-webkit-scrollbar-track {
+  background: #f8fafc;
+}
+
+.admin-table-scrollable::-webkit-scrollbar-thumb {
+  background: linear-gradient(90deg, #ef4444 0%, #dc2626 100%);
+  border-radius: 10px;
+  border: 1px solid rgba(220, 38, 38, 0.2);
+}
+
+.admin-table-scrollable::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(90deg, #f87171 0%, #ef4444 100%);
+}
