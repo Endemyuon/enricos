@@ -1,10 +1,8 @@
 // prisma/seed.ts
 // This file seeds your database with initial data
 
-import { PrismaClient } from '@prisma/client';
+import prisma from '../lib/prisma';
 import bcrypt from 'bcryptjs';
-
-const prisma = new PrismaClient();
 
 async function main() {
   console.log('🌱 Seeding database...');
@@ -72,10 +70,10 @@ async function main() {
 
 main()
   .then(async () => {
-    await prisma.$disconnect();
+    console.log('✅ Database seeding complete');
+    process.exit(0);
   })
   .catch(async (e) => {
-    console.error(e);
-    await prisma.$disconnect();
+    console.error('❌ Seeding error:', e);
     process.exit(1);
   });
