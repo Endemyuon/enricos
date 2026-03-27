@@ -1,0 +1,96 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  email     String   @unique
+  phone     String?
+  rfidCard  String?  @unique
+  points    Int      @default(0)
+  joinDate  String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pointLedger   PointLedger[]
+  redemptions   Redemption[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  password  String
+  firstName String?
+  lastName  String?
+  role      String   @default("customer")
+  createdAt DateTime @default(now())
+}
+
+model Reward {
+  id          String   @id @default(cuid())
+  title       String
+  description String?
+  expiry      String?
+  imgUrl      String?
+  points      Int      @default(0)
+  quantity    Int      @default(0)
+  category    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  redemptions Redemption[]
+}
+
+model PointLedger {
+  id            String   @id @default(cuid())
+  customerId    String
+  email         String
+  amount        Int
+  type          String
+  description   String?
+  reference     String?
+  balanceBefore Int      @default(0)
+  balanceAfter  Int      @default(0)
+  createdAt     DateTime @default(now())
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([email])
+  @@index([type])
+  @@index([createdAt])
+}
+
+model Redemption {
+  id               String   @id @default(cuid())
+  customerId       String
+  customerName     String
+  email            String
+  rewardId         String
+  rewardTitle      String
+  pointsRedeemed   Int
+  status           String   @default("pending")
+  notes            String?
+  redeemedAt       String
+  completedAt      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  customer Customer @relation(fields: [customerId], references: [id], onDelete: Cascade)
+  reward   Reward   @relation(fields: [rewardId], references: [id], onDelete: Cascade)
+
+  @@index([customerId])
+  @@index([email])
+  @@index([rewardId])
+  @@index([status])
+  @@index([redeemedAt])
+}

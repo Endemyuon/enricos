@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import React from 'react';
+import { getUserByEmail, createUser, createCustomer, getCustomerByEmail } from '@/lib/db';
 import { Resend } from 'resend';
-import bcrypt from 'bcryptjs';
+import RegistrationEmail from '@/emails/registration-email';
 
 const ADMIN_EMAILS = ['admin@example.com', 'enricocatolico03@gmail.com'];
 const resend = new Resend(process.env.RESEND_API_KEY);
@@ -14,66 +15,46 @@ export async function POST(request: NextRequest) {
     console.log('=== AUTH API CALL ===');
     console.log('Action:', action);
     console.log('Email:', email);
-
-    if (action === 'checkEmail') {
-      // Check if email already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      return NextResponse.json({
-        exists: !!existingUser,
-      });
-    }
+    console.log('Password length:', password?.length);
 
     if (action === 'register') {
       // Check if user already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-
+      const existingUser = getUserByEmail(email);
       if (existingUser) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
+      // Create user
+      const userId = Date.now().toString();
+      const user = createUser(userId, email, password, 'customer');
 
-      // Create user and customer in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            role: 'customer',
-          },
-        });
-
-        const customer = await tx.customer.create({
-          data: {
-            id: user.id,
-            name: `${data.firstName} ${data.lastName}`,
-            email,
-            points: 0,
-            joinDate: new Date().toISOString().split('T')[0],
-            rfidCard: data.rfidCard || undefined,
-          },
-        });
-
-        return { user, customer };
+      // Create customer profile
+      const customer = createCustomer({
+        id: userId,
+        name: `${data.firstName} ${data.lastName}`,
+        email: email,
+        phone: '',
+        rfidCard: data.rfidCard || undefined,
+        points: 0,
+        joinDate: new Date().toISOString().split('T')[0],
       });
 
       // Send registration email
       try {
+        console.log('🔍 RESEND_API_KEY exists:', !!process.env.RESEND_API_KEY);
+        console.log('🔍 API Key value (first 10 chars):', process.env.RESEND_API_KEY?.substring(0, 10));
+        
         if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key_here') {
-          console.log('📧 Sending registration email to:', email);
-
-          await resend.emails.send({
-            from: "Enrico's Rewards <onboarding@resend.dev>",
+          console.log('\n========== 📧 EMAIL SENDING ==========');
+          console.log('📧 Recipient:', email);
+          console.log('👤 User Name:', `${data.firstName} ${data.lastName}`);
+          console.log('🔑 API Key Length:', process.env.RESEND_API_KEY.length);
+          console.log('📤 Attempting to send email via Resend...');
+          
+          const response = await resend.emails.send({
+            from: 'Enrico\'s Rewards <onboarding@resend.dev>',
             to: email,
-            subject: "Welcome to Enrico's Rewards! Your Account is Verified",
+            subject: 'Welcome to Enrico\'s Rewards! Your Account is Verified',
             html: `
               <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
                 <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
@@ -115,99 +96,101 @@ export async function POST(request: NextRequest) {
               </div>
             `,
           });
-
-          console.log('✅ Registration email sent successfully');
+          
+          if (response.id) {
+            console.log('✅ EMAIL SENT SUCCESSFULLY!');
+            console.log('📨 Email ID:', response.id);
+            console.log('🎯 Sent to:', email);
+            console.log('⏰ Timestamp:', new Date().toISOString());
+            console.log('====================================\n');
+          } else {
+            console.log('⚠️ Response received but no email ID');
+            console.log('Response:', response);
+          }
+        } else {
+          console.log('\n❌ EMAIL NOT SENT - API KEY ISSUE');
+          console.log('⚠️ Resend API key not configured or invalid');
+          console.log('⚠️ API Key exists:', !!process.env.RESEND_API_KEY);
+          console.log('⚠️ API Key value:', process.env.RESEND_API_KEY ? '***hidden***' : 'NOT SET');
+          console.log('====================================\n');
         }
       } catch (emailError) {
-        console.error('⚠️ Email sending failed:', emailError);
-        // Don't fail registration if email fails
+        console.error('\n❌ EMAIL SENDING FAILED!');
+        console.error('📧 Recipient:', email);
+        console.error('🔴 Error details:', emailError);
+        if (emailError instanceof Error) {
+          console.error('💬 Error message:', emailError.message);
+          console.error('📋 Error name:', emailError.name);
+        }
+        console.error('====================================\n');
+        // Don't fail registration if email fails - log but continue
       }
 
       return NextResponse.json({
         success: true,
-        user: { email: result.user.email, role: result.user.role, id: result.user.id },
-        customer: result.customer,
-        message: 'Welcome! Registration successful. Start earning points!',
+        user: { email: user.email, role: user.role },
+        customer,
+        message: 'Welcome! A verification email has been sent to your inbox.',
       });
     }
 
     if (action === 'login') {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
+      const user = getUserByEmail(email);
 
+      // Check if it's an admin email
       const isAdmin = ADMIN_EMAILS.includes(email);
 
+      console.log('Admin emails list:', ADMIN_EMAILS);
+      console.log('Is admin email?', isAdmin);
+
       if (isAdmin) {
-        // Admin login - verify password
+        // Admin login - just verify password length for demo
         if (password.length >= 6) {
           console.log('✅ Admin login successful');
           return NextResponse.json({
             success: true,
-            user: { email, role: 'admin', id: 'admin' },
+            user: { email, role: 'admin' },
           });
         }
-        console.log('❌ Admin login failed');
+        console.log('❌ Admin login failed - invalid password');
         return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
       }
 
       // Customer login
       if (!user) {
-        // Auto-create customer on first login with valid password
+        // Auto-create customer on first login with any valid email
         if (password.length >= 6) {
-          const hashedPassword = await bcrypt.hash(password, 10);
+          const userId = Date.now().toString();
+          const newUser = createUser(userId, email, password, 'customer');
 
-          const result = await prisma.$transaction(async (tx) => {
-            const newUser = await tx.user.create({
-              data: {
-                email,
-                password: hashedPassword,
-                role: 'customer',
-              },
-            });
-
-            const customer = await tx.customer.create({
-              data: {
-                id: newUser.id,
-                name: email.split('@')[0],
-                email,
-                points: 0,
-                joinDate: new Date().toISOString().split('T')[0],
-              },
-            });
-
-            return { user: newUser, customer };
+          const customer = createCustomer({
+            id: userId,
+            name: email.split('@')[0],
+            email: email,
+            phone: '',
+            points: 0,
+            joinDate: new Date().toISOString().split('T')[0],
           });
 
           return NextResponse.json({
             success: true,
-            user: {
-              email: result.user.email,
-              role: result.user.role,
-              id: result.user.id,
-              name: result.customer.name,
-            },
-            customer: result.customer,
+            user: { email: newUser.email, role: newUser.role, id: userId, name: customer.name },
+            customer,
           });
         }
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
 
-      // Verify password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-
-      if (passwordMatch) {
-        const customer = await prisma.customer.findUnique({
-          where: { email },
-        });
-
+      // Verify password (in production, use proper hashing)
+      if (user.password === password) {
+        const customer = getCustomerByEmail(email);
         return NextResponse.json({
           success: true,
-          user: {
-            email: user.email,
-            role: user.role,
+          user: { 
+            email: user.email, 
+            role: user.role, 
             id: user.id,
-            name: customer?.name || email.split('@')[0],
+            name: customer?.name || email.split('@')[0]
           },
           customer,
         });

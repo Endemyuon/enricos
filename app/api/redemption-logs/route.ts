@@ -1,10 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  createRedemptionLog,
-  getRedemptionLogsByCustomerId,
-  getAllRedemptionLogs,
-  updateRedemptionLog,
-} from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,23 +7,23 @@ export async function GET(request: NextRequest) {
     const customerId = searchParams.get('customerId');
     const status = searchParams.get('status');
 
-    let logs;
+    let where = {};
+    if (customerId) where = { customerId };
+    if (status) where = { ...where, status };
 
-    if (customerId) {
-      logs = getRedemptionLogsByCustomerId(customerId);
-    } else {
-      logs = getAllRedemptionLogs();
-    }
+    const redemptions = await prisma.redemption.findMany({
+      where,
+      orderBy: { redeemedAt: 'desc' },
+      include: {
+        customer: true,
+        reward: true,
+      },
+    });
 
-    // Filter by status if provided
-    if (status) {
-      logs = logs.filter(log => log.status === status);
-    }
-
-    return NextResponse.json(logs);
+    return NextResponse.json(redemptions);
   } catch (error) {
-    console.error('Error fetching redemption logs:', error);
-    return NextResponse.json({ error: 'Failed to fetch redemption logs' }, { status: 500 });
+    console.error('Error fetching redemptions:', error);
+    return NextResponse.json({ error: 'Failed to fetch redemptions' }, { status: 500 });
   }
 }
 
@@ -38,53 +33,80 @@ export async function POST(request: NextRequest) {
     const { action, ...data } = body;
 
     if (action === 'create') {
-      try {
-        console.log(`API: Creating redemption for customer ${data.customerId}, reward ${data.rewardId}`);
-        const log = createRedemptionLog({
-          id: data.id || Date.now().toString(),
-          customerId: data.customerId,
-          customerName: data.customerName,
-          email: data.email,
-          rewardId: data.rewardId,
-          rewardTitle: data.rewardTitle,
-          pointsRedeemed: data.pointsRedeemed,
-          status: data.status || 'pending',
-          notes: data.notes,
-          redeemedAt: data.redeemedAt || new Date().toISOString(),
-        });
-        console.log(`API: Redemption created successfully`, log);
-        return NextResponse.json(log);
-      } catch (createError) {
-        console.error(`API: Create redemption failed:`, createError);
-        return NextResponse.json({ 
-          error: createError instanceof Error ? createError.message : 'Failed to create redemption' 
-        }, { status: 400 });
+      // Verify customer has enough points
+      const customer = await prisma.customer.findUnique({
+        where: { id: data.customerId },
+      });
+
+      const reward = await prisma.reward.findUnique({
+        where: { id: data.rewardId },
+      });
+
+      if (!customer || !reward) {
+        return NextResponse.json({ error: 'Customer or reward not found' }, { status: 404 });
       }
+
+      if (customer.points < reward.points) {
+        return NextResponse.json({ error: 'Insufficient points' }, { status: 400 });
+      }
+
+      // Create redemption and deduct points in transaction
+      const result = await prisma.$transaction(async (tx) => {
+        const redemption = await tx.redemption.create({
+          data: {
+            customerId: data.customerId,
+            customerName: customer.name,
+            email: customer.email,
+            rewardId: data.rewardId,
+            rewardTitle: reward.title,
+            pointsRedeemed: reward.points,
+            status: 'pending',
+            notes: data.notes,
+            redeemedAt: new Date().toISOString(),
+          },
+        });
+
+        // Deduct points from customer
+        await tx.customer.update({
+          where: { id: data.customerId },
+          data: { points: { decrement: reward.points } },
+        });
+
+        // Create point ledger entry
+        await tx.pointLedger.create({
+          data: {
+            customerId: data.customerId,
+            email: customer.email,
+            amount: -reward.points,
+            type: 'redemption',
+            description: `Redeemed: ${reward.title}`,
+            reference: redemption.id,
+            balanceBefore: customer.points,
+            balanceAfter: customer.points - reward.points,
+          },
+        });
+
+        return redemption;
+      });
+
+      return NextResponse.json(result);
     }
 
     if (action === 'update') {
-      try {
-        console.log(`API: Updating redemption ${data.id}`);
-        const log = updateRedemptionLog(data.id, {
+      const redemption = await prisma.redemption.update({
+        where: { id: data.id },
+        data: {
           status: data.status,
           notes: data.notes,
-          completedAt: data.completedAt,
-        });
-        console.log(`API: Redemption updated successfully`, log);
-        return NextResponse.json(log);
-      } catch (updateError) {
-        console.error(`API: Update redemption failed:`, updateError);
-        return NextResponse.json({ 
-          error: updateError instanceof Error ? updateError.message : 'Failed to update redemption' 
-        }, { status: 400 });
-      }
+          completedAt: data.status === 'completed' ? new Date().toISOString() : undefined,
+        },
+      });
+      return NextResponse.json(redemption);
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error processing redemption log request:', error);
-    return NextResponse.json({ 
-      error: error instanceof Error ? error.message : 'Failed to process request' 
-    }, { status: 500 });
+    console.error('Redemption logs API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }

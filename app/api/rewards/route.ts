@@ -1,14 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import {
-  getAllRewards,
-  createReward,
-  updateReward,
-  deleteReward,
-} from '@/lib/db';
+import prisma from '@/lib/prisma';
 
 export async function GET(request: NextRequest) {
   try {
-    const rewards = getAllRewards();
+    const rewards = await prisma.reward.findMany({
+      orderBy: { createdAt: 'desc' },
+    });
     return NextResponse.json(rewards);
   } catch (error) {
     console.error('Error fetching rewards:', error);
@@ -22,37 +19,50 @@ export async function POST(request: NextRequest) {
     const { action, ...data } = body;
 
     if (action === 'create') {
-      const reward = createReward({
-        id: Date.now().toString(),
-        title: data.title,
-        expiry: data.expiry,
-        imgUrl: data.imgUrl,
-        points: data.points || 0,
+      const reward = await prisma.reward.create({
+        data: {
+          title: data.title,
+          description: data.description,
+          expiry: data.expiry,
+          imgUrl: data.imgUrl,
+          points: data.points || 0,
+          quantity: data.quantity || 0,
+          category: data.category,
+        },
       });
       return NextResponse.json(reward);
     }
 
     if (action === 'update') {
-      const reward = updateReward(data.id, {
-        title: data.title,
-        expiry: data.expiry,
-        imgUrl: data.imgUrl,
-        points: data.points,
+      const reward = await prisma.reward.update({
+        where: { id: data.id },
+        data: {
+          title: data.title,
+          description: data.description,
+          expiry: data.expiry,
+          imgUrl: data.imgUrl,
+          points: data.points,
+          quantity: data.quantity,
+          category: data.category,
+        },
       });
       return NextResponse.json(reward);
     }
 
     if (action === 'delete') {
-      const success = deleteReward(data.id);
-      if (success) {
+      try {
+        await prisma.reward.delete({
+          where: { id: data.id },
+        });
         return NextResponse.json({ success: true });
+      } catch (error) {
+        return NextResponse.json({ error: 'Reward not found' }, { status: 404 });
       }
-      return NextResponse.json({ error: 'Reward not found' }, { status: 404 });
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
-    console.error('Error processing reward request:', error);
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+    console.error('Rewards API error:', error);
+    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
   }
 }
