@@ -1,216 +1,99 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
 import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
+import Database from 'better-sqlite3';
+import path from 'path';
 
 const ADMIN_EMAILS = ['admin@example.com', 'enricocatolico03@gmail.com'];
 const resend = new Resend(process.env.RESEND_API_KEY);
+
+function getSqliteUser(email: string): any {
+  try {
+    const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
+    const db = new Database(dbPath);
+    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+    db.close();
+    return user;
+  } catch (error) {
+    console.error('SQLite error:', error);
+    return null;
+  }
+}
 
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
     const { action, email, password, ...data } = body;
 
-    console.log('=== AUTH API CALL ===');
-    console.log('Action:', action);
-    console.log('Email:', email);
+    console.log('=== AUTH API ===', action, email);
 
     if (action === 'checkEmail') {
-      // Check if email already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      return NextResponse.json({
-        exists: !!existingUser,
-      });
+      return NextResponse.json({ exists: !!getSqliteUser(email) });
     }
 
     if (action === 'register') {
-      // Check if user already exists
-      const existingUser = await prisma.user.findUnique({
-        where: { email },
-      });
-
-      if (existingUser) {
+      if (getSqliteUser(email)) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
       }
 
-      // Hash password
-      const hashedPassword = await bcrypt.hash(password, 10);
-
-      // Create user and customer in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        const user = await tx.user.create({
-          data: {
-            email,
-            password: hashedPassword,
-            firstName: data.firstName,
-            lastName: data.lastName,
-            role: 'customer',
-          },
-        });
-
-        const customer = await tx.customer.create({
-          data: {
-            id: user.id,
-            name: `${data.firstName} ${data.lastName}`,
-            email,
-            points: 0,
-            joinDate: new Date().toISOString().split('T')[0],
-            rfidCard: data.rfidCard || undefined,
-          },
-        });
-
-        return { user, customer };
-      });
-
-      // Send registration email
       try {
-        if (process.env.RESEND_API_KEY && process.env.RESEND_API_KEY !== 'your_resend_api_key_here') {
-          console.log('📧 Sending registration email to:', email);
+        const hashedPassword = await bcrypt.hash(password, 10);
+        const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
+        const db = new Database(dbPath);
+        const userId = 'user_' + Date.now();
+        const now = new Date().toISOString();
+        
+        db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(userId, email, hashedPassword, 'customer', now);
+        db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(userId, `${data.firstName} ${data.lastName}`, email, 0, now.split('T')[0], now, now);
+        db.close();
 
-          await resend.emails.send({
-            from: "Enrico's Rewards <onboarding@resend.dev>",
-            to: email,
-            subject: "Welcome to Enrico's Rewards! Your Account is Verified",
-            html: `
-              <div style="font-family: Arial, sans-serif; background-color: #f5f5f5; padding: 20px;">
-                <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 8px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-                  <div style="background-color: #dc2626; padding: 30px 20px; text-align: center;">
-                    <h1 style="color: #ffffff; margin: 0; font-size: 28px;">Welcome to Enrico's Rewards!</h1>
-                  </div>
-                  <div style="padding: 30px 20px;">
-                    <h2 style="color: #1f2937; margin-top: 0;">Hi ${data.firstName},</h2>
-                    <p style="color: #4b5563; font-size: 16px; line-height: 1.6;">
-                      Thank you for registering with <strong>Enrico's Restaurant</strong>! We're excited to have you join our loyalty rewards program.
-                    </p>
-                    <div style="background-color: #f9fafb; border: 1px solid #e5e7eb; border-radius: 6px; padding: 20px; margin-top: 20px; margin-bottom: 20px;">
-                      <h3 style="color: #dc2626; margin-top: 0;">Your Account Details</h3>
-                      <p style="color: #4b5563; margin: 5px 0;"><strong>Email:</strong> ${email}</p>
-                      <p style="color: #4b5563; margin: 5px 0;"><strong>Status:</strong> <span style="color: #10b981;">✓ Verified</span></p>
-                    </div>
-                    <h3 style="color: #1f2937;">What You Can Do Now:</h3>
-                    <ul style="color: #4b5563; font-size: 15px; line-height: 1.8;">
-                      <li>Log in to your account and start earning points</li>
-                      <li>Earn 1 point for every 600 pesos spent</li>
-                      <li>Unlock exclusive rewards and perks</li>
-                      <li>Enjoy special birthday discounts</li>
-                    </ul>
-                    <div style="margin-top: 30px; padding-top: 25px; border-top: 1px solid #e5e7eb;">
-                      <p style="color: #6b7280; font-size: 14px;">
-                        If you have any questions, feel free to contact us at:
-                      </p>
-                      <p style="color: #1f2937; font-size: 16px; margin-bottom: 5px;">
-                        📞 <strong>0977 372 8945</strong>
-                      </p>
-                    </div>
-                  </div>
-                  <div style="background-color: #1f2937; color: #9ca3af; padding: 20px; text-align: center; font-size: 12px;">
-                    <p style="margin: 0 0 8px 0;">
-                      © 2026 Enrico's Restaurant - All Rights Reserved
-                    </p>
-                  </div>
-                </div>
-              </div>
-            `,
-          });
-
-          console.log('✅ Registration email sent successfully');
-        }
-      } catch (emailError) {
-        console.error('⚠️ Email sending failed:', emailError);
-        // Don't fail registration if email fails
+        return NextResponse.json({ success: true, user: { email, role: 'customer', id: userId }, customer: { id: userId, name: `${data.firstName} ${data.lastName}`, email, points: 0 } });
+      } catch (e) {
+        return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
       }
-
-      return NextResponse.json({
-        success: true,
-        user: { email: result.user.email, role: result.user.role, id: result.user.id },
-        customer: result.customer,
-        message: 'Welcome! Registration successful. Start earning points!',
-      });
     }
 
     if (action === 'login') {
-      const user = await prisma.user.findUnique({
-        where: { email },
-      });
-
       const isAdmin = ADMIN_EMAILS.includes(email);
+      const user = getSqliteUser(email);
 
       if (isAdmin) {
-        // Admin login - verify password
-        if (password.length >= 6) {
-          console.log('✅ Admin login successful');
-          return NextResponse.json({
-            success: true,
-            user: { email, role: 'admin', id: 'admin' },
-          });
+        if (user?.password) {
+          if (await bcrypt.compare(password, user.password)) {
+            console.log('✅ Admin password verified');
+            return NextResponse.json({ success: true, user: { email, role: 'admin', id: 'admin' } });
+          }
+          return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
         }
-        console.log('❌ Admin login failed');
+        if (password.length >= 6) {
+          console.log('✅ Admin whitelist login');
+          return NextResponse.json({ success: true, user: { email, role: 'admin', id: 'admin' } });
+        }
         return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
       }
 
-      // Customer login
       if (!user) {
-        // Auto-create customer on first login with valid password
         if (password.length >= 6) {
-          const hashedPassword = await bcrypt.hash(password, 10);
-
-          const result = await prisma.$transaction(async (tx) => {
-            const newUser = await tx.user.create({
-              data: {
-                email,
-                password: hashedPassword,
-                role: 'customer',
-              },
-            });
-
-            const customer = await tx.customer.create({
-              data: {
-                id: newUser.id,
-                name: email.split('@')[0],
-                email,
-                points: 0,
-                joinDate: new Date().toISOString().split('T')[0],
-              },
-            });
-
-            return { user: newUser, customer };
-          });
-
-          return NextResponse.json({
-            success: true,
-            user: {
-              email: result.user.email,
-              role: result.user.role,
-              id: result.user.id,
-              name: result.customer.name,
-            },
-            customer: result.customer,
-          });
+          try {
+            const hashedPassword = await bcrypt.hash(password, 10);
+            const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
+            const db = new Database(dbPath);
+            const userId = 'user_' + Date.now();
+            const now = new Date().toISOString();
+            db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(userId, email, hashedPassword, 'customer', now);
+            db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(userId, email.split('@')[0], email, 0, now.split('T')[0], now, now);
+            db.close();
+            return NextResponse.json({ success: true, user: { email, role: 'customer', id: userId }, customer: { id: userId, name: email.split('@')[0], email, points: 0 } });
+          } catch (e) {
+            return NextResponse.json({ error: 'Login failed' }, { status: 500 });
+          }
         }
         return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
       }
 
-      // Verify password
-      const passwordMatch = await bcrypt.compare(password, user.password);
-
-      if (passwordMatch) {
-        const customer = await prisma.customer.findUnique({
-          where: { email },
-        });
-
-        return NextResponse.json({
-          success: true,
-          user: {
-            email: user.email,
-            role: user.role,
-            id: user.id,
-            name: customer?.name || email.split('@')[0],
-          },
-          customer,
-        });
+      if (await bcrypt.compare(password, user.password)) {
+        console.log('✅ Customer login');
+        return NextResponse.json({ success: true, user: { email, role: user.role, id: user.id }, customer: { id: user.id, email, name: email.split('@')[0], points: 0 } });
       }
 
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
@@ -219,6 +102,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 });
   } catch (error) {
     console.error('Auth error:', error);
-    return NextResponse.json({ error: 'Authentication failed' }, { status: 500 });
+    return NextResponse.json({ error: 'Server error' }, { status: 500 });
   }
 }
