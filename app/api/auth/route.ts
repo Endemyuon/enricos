@@ -29,19 +29,20 @@ export async function POST(request: NextRequest) {
         const hashedPassword = await bcrypt.hash(password, 10);
         const userId = 'user_' + Date.now();
         const now = new Date().toISOString();
+        const fullName = `${data.firstName} ${data.lastName}`.trim();
         
         db.prepare('INSERT INTO users (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
           userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', now
         );
         
         db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-          userId, `${data.firstName} ${data.lastName}`, email, 0, now.split('T')[0], now, now
+          userId, fullName, email, 0, now.split('T')[0], now, now
         );
 
         return NextResponse.json({ 
           success: true, 
-          user: { email, role: 'customer', id: userId }, 
-          customer: { id: userId, name: `${data.firstName} ${data.lastName}`, email, points: 0 } 
+          user: { email, role: 'customer', id: userId, name: fullName }, 
+          customer: { id: userId, name: fullName, email, points: 0 } 
         });
       } catch (e) {
         return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
@@ -73,19 +74,20 @@ export async function POST(request: NextRequest) {
             const hashedPassword = await bcrypt.hash(password, 10);
             const userId = 'user_' + Date.now();
             const now = new Date().toISOString();
+            const defaultName = email.split('@')[0];
             
             db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(
               userId, email, hashedPassword, 'customer', now
             );
             
             db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-              userId, email.split('@')[0], email, 0, now.split('T')[0], now, now
+              userId, defaultName, email, 0, now.split('T')[0], now, now
             );
             
             return NextResponse.json({ 
               success: true, 
-              user: { email, role: 'customer', id: userId }, 
-              customer: { id: userId, name: email.split('@')[0], email, points: 0 } 
+              user: { email, role: 'customer', id: userId, name: defaultName }, 
+              customer: { id: userId, name: defaultName, email, points: 0 } 
             });
           } catch (e) {
             return NextResponse.json({ error: 'Login failed' }, { status: 500 });
@@ -96,10 +98,14 @@ export async function POST(request: NextRequest) {
 
       if (await bcrypt.compare(password, user.password)) {
         console.log('✅ Customer login');
+        // Get customer data to fetch the full name
+        const customer = db.prepare('SELECT name FROM customers WHERE email = ?').get(email) as any;
+        const fullName = customer?.name || `${user.firstName} ${user.lastName}`.trim() || email.split('@')[0];
+        
         return NextResponse.json({ 
           success: true, 
-          user: { email, role: user.role, id: user.id }, 
-          customer: { id: user.id, email, name: email.split('@')[0], points: 0 } 
+          user: { email, role: user.role, id: user.id, name: fullName }, 
+          customer: { id: user.id, email, name: fullName, points: 0 } 
         });
       }
 
