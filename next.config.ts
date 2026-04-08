@@ -20,8 +20,6 @@ const nextConfig: NextConfig = {
   },
   // Enable compression
   compress: true,
-  // Optimize build for memory constraints
-  swcMinify: true,
   // Increase build timeout for slower VPS
   staticPageGenerationTimeout: 300,
   // Experimental optimizations
