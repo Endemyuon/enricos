@@ -551,7 +551,7 @@ export default function RegisterPage() {
                     className="w-full px-4 py-3 border-2 border-red-300 rounded-lg focus:outline-none focus:border-red-600 focus:ring-2 focus:ring-red-200 bg-white text-center text-2xl font-bold text-red-600 placeholder-slate-400 transition-all duration-300"
                     placeholder="0"
                     inputMode="numeric"
-                    maxLength="3"
+                    maxLength={3}
                   />
 
                   <button

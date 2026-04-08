@@ -63,8 +63,8 @@ export default function HomePage() {
     
     // Parse XFBML after script loads
     script.onload = () => {
-      if (window.FB) {
-        window.FB.XFBML.parse();
+      if ((window as any).FB) {
+        (window as any).FB.XFBML.parse();
       }
     };
     
@@ -400,17 +400,17 @@ export default function HomePage() {
             <div className="mt-8 grid md:grid-cols-3 gap-6">
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
                 <div style={{ width: '100%', height: '280px' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid029Co54bkMDCQZidFyCCBN45kCtGNF4xBpAAqvRU2aENqcrmxCqSNxErZYfmgDDQW2l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid029Co54bkMDCQZidFyCCBN45kCtGNF4xBpAAqvRU2aENqcrmxCqSNxErZYfmgDDQW2l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
                 <div style={{ width: '100%', height: '280px' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid06nnjDEiYK8D6gxtd6Gjq1FzQ4QrqYSQRrYTyBpyT1MmtqJKi8GSsqKCHbdqk8eckl&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid06nnjDEiYK8D6gxtd6Gjq1FzQ4QrqYSQRrYTyBpyT1MmtqJKi8GSsqKCHbdqk8eckl&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
               <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
                 <div style={{ width: '100%', height: '280px' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid032H1ZgzpS9dpTaMbc96E9Grj39qkikgrBs4Xr6sETzscV4qCEWCDJqYrZr8ydADi6l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen="true" allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid032H1ZgzpS9dpTaMbc96E9Grj39qkikgrBs4Xr6sETzscV4qCEWCDJqYrZr8ydADi6l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0, display: 'block' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
             </div>
@@ -709,7 +709,7 @@ export default function HomePage() {
                 width="100%"
                 height="400"
                 style={{ border: 0, borderRadius: '8px' }}
-                allowFullScreen=""
+                allowFullScreen={true}
                 loading="lazy"
                 referrerPolicy="no-referrer-when-downgrade"
               ></iframe>

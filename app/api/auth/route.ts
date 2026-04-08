@@ -1,24 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Resend } from 'resend';
 import bcrypt from 'bcryptjs';
-import Database from 'better-sqlite3';
-import path from 'path';
+import { getAccountsDatabase } from '@/lib/db';
 
+const db = getAccountsDatabase();
 const ADMIN_EMAILS = ['admin@example.com', 'enricocatolico03@gmail.com'];
 const resend = new Resend(process.env.RESEND_API_KEY);
-
-function getSqliteUser(email: string): any {
-  try {
-    const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
-    const db = new Database(dbPath);
-    const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
-    db.close();
-    return user;
-  } catch (error) {
-    console.error('SQLite error:', error);
-    return null;
-  }
-}
 
 export async function POST(request: NextRequest) {
   try {
@@ -28,26 +15,34 @@ export async function POST(request: NextRequest) {
     console.log('=== AUTH API ===', action, email);
 
     if (action === 'checkEmail') {
-      return NextResponse.json({ exists: !!getSqliteUser(email) });
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      return NextResponse.json({ exists: !!user });
     }
 
     if (action === 'register') {
-      if (getSqliteUser(email)) {
+      const existingUser = db.prepare('SELECT * FROM users WHERE email = ?').get(email);
+      if (existingUser) {
         return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
       }
 
       try {
         const hashedPassword = await bcrypt.hash(password, 10);
-        const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
-        const db = new Database(dbPath);
         const userId = 'user_' + Date.now();
         const now = new Date().toISOString();
         
-        db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(userId, email, hashedPassword, 'customer', now);
-        db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(userId, `${data.firstName} ${data.lastName}`, email, 0, now.split('T')[0], now, now);
-        db.close();
+        db.prepare('INSERT INTO users (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+          userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', now
+        );
+        
+        db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+          userId, `${data.firstName} ${data.lastName}`, email, 0, now.split('T')[0], now, now
+        );
 
-        return NextResponse.json({ success: true, user: { email, role: 'customer', id: userId }, customer: { id: userId, name: `${data.firstName} ${data.lastName}`, email, points: 0 } });
+        return NextResponse.json({ 
+          success: true, 
+          user: { email, role: 'customer', id: userId }, 
+          customer: { id: userId, name: `${data.firstName} ${data.lastName}`, email, points: 0 } 
+        });
       } catch (e) {
         return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
       }
@@ -55,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'login') {
       const isAdmin = ADMIN_EMAILS.includes(email);
-      const user = getSqliteUser(email);
+      const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
 
       if (isAdmin) {
         if (user?.password) {
@@ -76,14 +71,22 @@ export async function POST(request: NextRequest) {
         if (password.length >= 6) {
           try {
             const hashedPassword = await bcrypt.hash(password, 10);
-            const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
-            const db = new Database(dbPath);
             const userId = 'user_' + Date.now();
             const now = new Date().toISOString();
-            db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(userId, email, hashedPassword, 'customer', now);
-            db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(userId, email.split('@')[0], email, 0, now.split('T')[0], now, now);
-            db.close();
-            return NextResponse.json({ success: true, user: { email, role: 'customer', id: userId }, customer: { id: userId, name: email.split('@')[0], email, points: 0 } });
+            
+            db.prepare('INSERT INTO users (id, email, password, role, createdAt) VALUES (?, ?, ?, ?, ?)').run(
+              userId, email, hashedPassword, 'customer', now
+            );
+            
+            db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
+              userId, email.split('@')[0], email, 0, now.split('T')[0], now, now
+            );
+            
+            return NextResponse.json({ 
+              success: true, 
+              user: { email, role: 'customer', id: userId }, 
+              customer: { id: userId, name: email.split('@')[0], email, points: 0 } 
+            });
           } catch (e) {
             return NextResponse.json({ error: 'Login failed' }, { status: 500 });
           }
@@ -93,7 +96,11 @@ export async function POST(request: NextRequest) {
 
       if (await bcrypt.compare(password, user.password)) {
         console.log('✅ Customer login');
-        return NextResponse.json({ success: true, user: { email, role: user.role, id: user.id }, customer: { id: user.id, email, name: email.split('@')[0], points: 0 } });
+        return NextResponse.json({ 
+          success: true, 
+          user: { email, role: user.role, id: user.id }, 
+          customer: { id: user.id, email, name: email.split('@')[0], points: 0 } 
+        });
       }
 
       return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });

@@ -6,25 +6,10 @@ import dynamic from 'next/dynamic';
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 export function LoadingSpinner() {
-  const [animationData, setAnimationData] = useState(null);
   const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    const loadAnimation = async () => {
-      try {
-        const response = await fetch('/Food.lottie');
-        const data = await response.json();
-        setAnimationData(data);
-      } catch (error) {
-        console.error('Failed to load animation:', error);
-        // If loading fails, still show something
-        setAnimationData(null);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadAnimation();
+    setIsLoading(false);
   }, []);
 
   return (
@@ -32,9 +17,9 @@ export function LoadingSpinner() {
       <div className="bg-white rounded-2xl p-8 shadow-2xl flex flex-col items-center gap-4">
         {/* Lottie Animation or Fallback Spinner */}
         <div className="w-24 h-24 flex items-center justify-center">
-          {animationData && !isLoading ? (
+          {!isLoading ? (
             <Lottie 
-              animationData={animationData}
+              src="/Food.lottie"
               loop={true}
               autoplay={true}
               style={{ width: '100%', height: '100%' }}

@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getAccountsDatabase } from '@/lib/db';
+
+const db = getAccountsDatabase();
 
 export async function GET(request: NextRequest) {
   try {
@@ -8,29 +10,18 @@ export async function GET(request: NextRequest) {
 
     if (action === 'stats') {
       // Get statistics
-      const totalCustomers = await prisma.customer.count();
-      const totalPoints = await prisma.customer.aggregate({
-        _sum: { points: true },
-      });
-      const totalRedeemed = await prisma.redemption.count({
-        where: { status: 'completed' },
-      });
+      const totalCustomersResult = db.prepare('SELECT COUNT(*) as count FROM customers').get() as { count: number };
+      const totalPointsResult = db.prepare('SELECT SUM(points) as total FROM customers').get() as { total: number | null };
 
       return NextResponse.json({
-        totalCustomers,
-        totalPoints: totalPoints._sum.points || 0,
-        totalRedeemed,
+        totalCustomers: totalCustomersResult.count,
+        totalPoints: totalPointsResult.total || 0,
+        totalRedeemed: 0,
       });
     }
 
-    // Get all customers with their data
-    const customers = await prisma.customer.findMany({
-      orderBy: { createdAt: 'desc' },
-      include: {
-        pointLedger: true,
-        redemptions: true,
-      },
-    });
+    // Get all customers
+    const customers = db.prepare('SELECT * FROM customers ORDER BY createdAt DESC').all();
 
     return NextResponse.json(customers);
   } catch (error) {
@@ -45,16 +36,16 @@ export async function POST(request: NextRequest) {
     const { action, ...data } = body;
 
     if (action === 'create') {
-      const customer = await prisma.customer.create({
-        data: {
-          name: data.name,
-          email: data.email,
-          phone: data.phone,
-          rfidCard: data.rfidCard || undefined,
-          points: data.points || 0,
-          joinDate: new Date().toISOString().split('T')[0],
-        },
-      });
+      const id = Math.random().toString(36).substr(2, 9);
+      const now = new Date().toISOString();
+      const joinDate = data.joinDate || new Date().toISOString().split('T')[0];
+
+      db.prepare(`
+        INSERT INTO customers (id, name, email, phone, rfidCard, points, joinDate, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, data.name, data.email, data.phone || null, data.rfidCard || null, data.points || 0, joinDate, now, now);
+
+      const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
       return NextResponse.json(customer);
     }
 
@@ -62,18 +53,14 @@ export async function POST(request: NextRequest) {
       try {
         console.log(`API: Updating customer ${data.id} with points=${data.points}`);
 
-        const customer = await prisma.customer.update({
-          where: { id: data.id },
-          data: {
-            name: data.name,
-            email: data.email,
-            phone: data.phone,
-            rfidCard: data.rfidCard || undefined,
-            points: data.points,
-            joinDate: data.joinDate,
-          },
-        });
+        const now = new Date().toISOString();
+        db.prepare(`
+          UPDATE customers
+          SET name = ?, email = ?, phone = ?, rfidCard = ?, points = ?, joinDate = ?, updatedAt = ?
+          WHERE id = ?
+        `).run(data.name, data.email, data.phone || null, data.rfidCard || null, data.points, data.joinDate, now, data.id);
 
+        const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(data.id);
         console.log(`✅ Customer ${data.id} updated successfully with ${data.points} points`);
         return NextResponse.json(customer);
       } catch (error) {
@@ -84,10 +71,9 @@ export async function POST(request: NextRequest) {
 
     if (action === 'delete') {
       try {
-        const deletedCustomer = await prisma.customer.delete({
-          where: { id: data.id },
-        });
-        return NextResponse.json(deletedCustomer);
+        const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(data.id);
+        db.prepare('DELETE FROM customers WHERE id = ?').run(data.id);
+        return NextResponse.json(customer);
       } catch (error) {
         console.error(`Failed to delete customer ${data.id}:`, error);
         return NextResponse.json({ error: 'Failed to delete customer' }, { status: 500 });

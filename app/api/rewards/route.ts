@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getRewardsDatabase } from '@/lib/db';
+
+const db = getRewardsDatabase();
 
 export async function GET(request: NextRequest) {
   try {
-    const rewards = await prisma.reward.findMany({
-      orderBy: { createdAt: 'desc' },
-    });
+    const rewards = db.prepare('SELECT * FROM rewards ORDER BY createdAt DESC').all();
     return NextResponse.json(rewards);
   } catch (error) {
     console.error('Error fetching rewards:', error);
@@ -19,41 +19,33 @@ export async function POST(request: NextRequest) {
     const { action, ...data } = body;
 
     if (action === 'create') {
-      const reward = await prisma.reward.create({
-        data: {
-          title: data.title,
-          description: data.description,
-          expiry: data.expiry,
-          imgUrl: data.imgUrl,
-          points: data.points || 0,
-          quantity: data.quantity || 0,
-          category: data.category,
-        },
-      });
+      const id = Math.random().toString(36).substr(2, 9);
+      const now = new Date().toISOString();
+
+      db.prepare(`
+        INSERT INTO rewards (id, title, description, expiry, imgUrl, points, quantity, category, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, data.title, data.description || null, data.expiry || null, data.imgUrl || null, data.points || 0, data.quantity || 0, data.category || null, now, now);
+
+      const reward = db.prepare('SELECT * FROM rewards WHERE id = ?').get(id);
       return NextResponse.json(reward);
     }
 
     if (action === 'update') {
-      const reward = await prisma.reward.update({
-        where: { id: data.id },
-        data: {
-          title: data.title,
-          description: data.description,
-          expiry: data.expiry,
-          imgUrl: data.imgUrl,
-          points: data.points,
-          quantity: data.quantity,
-          category: data.category,
-        },
-      });
+      const now = new Date().toISOString();
+      db.prepare(`
+        UPDATE rewards
+        SET title = ?, description = ?, expiry = ?, imgUrl = ?, points = ?, quantity = ?, category = ?, updatedAt = ?
+        WHERE id = ?
+      `).run(data.title, data.description || null, data.expiry || null, data.imgUrl || null, data.points, data.quantity, data.category || null, now, data.id);
+
+      const reward = db.prepare('SELECT * FROM rewards WHERE id = ?').get(data.id);
       return NextResponse.json(reward);
     }
 
     if (action === 'delete') {
       try {
-        await prisma.reward.delete({
-          where: { id: data.id },
-        });
+        db.prepare('DELETE FROM rewards WHERE id = ?').run(data.id);
         return NextResponse.json({ success: true });
       } catch (error) {
         return NextResponse.json({ error: 'Reward not found' }, { status: 404 });

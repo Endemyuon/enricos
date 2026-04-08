@@ -1,5 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getAccountsDatabase, getRewardsDatabase, getRedemptioneLogsDatabase } from '@/lib/db';
+
+const accountsDb = getAccountsDatabase();
+const rewardsDb = getRewardsDatabase();
+const logsDb = getRedemptioneLogsDatabase();
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,18 +11,25 @@ export async function GET(request: NextRequest) {
     const customerId = searchParams.get('customerId');
     const status = searchParams.get('status');
 
-    let where = {};
-    if (customerId) where = { customerId };
-    if (status) where = { ...where, status };
+    let query = 'SELECT * FROM redemptions';
+    const params = [];
 
-    const redemptions = await prisma.redemption.findMany({
-      where,
-      orderBy: { redeemedAt: 'desc' },
-      include: {
-        customer: true,
-        reward: true,
-      },
-    });
+    if (customerId || status) {
+      const conditions = [];
+      if (customerId) {
+        conditions.push('customerId = ?');
+        params.push(customerId);
+      }
+      if (status) {
+        conditions.push('status = ?');
+        params.push(status);
+      }
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY redeemedAt DESC';
+
+    const redemptions = logsDb.prepare(query).all(...params);
 
     return NextResponse.json(redemptions);
   } catch (error) {
@@ -34,13 +45,8 @@ export async function POST(request: NextRequest) {
 
     if (action === 'create') {
       // Verify customer has enough points
-      const customer = await prisma.customer.findUnique({
-        where: { id: data.customerId },
-      });
-
-      const reward = await prisma.reward.findUnique({
-        where: { id: data.rewardId },
-      });
+      const customer = accountsDb.prepare('SELECT * FROM customers WHERE id = ?').get(data.customerId) as any;
+      const reward = rewardsDb.prepare('SELECT * FROM rewards WHERE id = ?').get(data.rewardId) as any;
 
       if (!customer || !reward) {
         return NextResponse.json({ error: 'Customer or reward not found' }, { status: 404 });
@@ -51,56 +57,45 @@ export async function POST(request: NextRequest) {
       }
 
       // Create redemption and deduct points in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        const redemption = await tx.redemption.create({
-          data: {
-            customerId: data.customerId,
-            customerName: customer.name,
-            email: customer.email,
-            rewardId: data.rewardId,
-            rewardTitle: reward.title,
-            pointsRedeemed: reward.points,
-            status: 'pending',
-            notes: data.notes,
-            redeemedAt: new Date().toISOString(),
-          },
-        });
+      const transaction = logsDb.transaction(() => {
+        const redemptionId = Math.random().toString(36).substr(2, 9);
+        const now = new Date().toISOString();
+
+        // Create redemption
+        logsDb.prepare(`
+          INSERT INTO redemptions (id, customerId, customerName, email, rewardId, rewardTitle, pointsRedeemed, status, notes, redeemedAt, createdAt, updatedAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(redemptionId, data.customerId, customer.name, customer.email, data.rewardId, reward.title, reward.points, 'pending', data.notes || null, now, now, now);
 
         // Deduct points from customer
-        await tx.customer.update({
-          where: { id: data.customerId },
-          data: { points: { decrement: reward.points } },
-        });
+        const newPoints = customer.points - reward.points;
+        accountsDb.prepare(`
+          UPDATE customers SET points = ?, updatedAt = ? WHERE id = ?
+        `).run(newPoints, now, data.customerId);
 
         // Create point ledger entry
-        await tx.pointLedger.create({
-          data: {
-            customerId: data.customerId,
-            email: customer.email,
-            amount: -reward.points,
-            type: 'redemption',
-            description: `Redeemed: ${reward.title}`,
-            reference: redemption.id,
-            balanceBefore: customer.points,
-            balanceAfter: customer.points - reward.points,
-          },
-        });
+        const ledgerId = Math.random().toString(36).substr(2, 9);
+        logsDb.prepare(`
+          INSERT INTO pointLedger (id, customerId, email, amount, type, description, reference, balanceBefore, balanceAfter, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(ledgerId, data.customerId, customer.email, -reward.points, 'redemption', `Redeemed: ${reward.title}`, redemptionId, customer.points, newPoints, now);
 
-        return redemption;
+        return logsDb.prepare('SELECT * FROM redemptions WHERE id = ?').get(redemptionId);
       });
 
+      const result = transaction();
       return NextResponse.json(result);
     }
 
     if (action === 'update') {
-      const redemption = await prisma.redemption.update({
-        where: { id: data.id },
-        data: {
-          status: data.status,
-          notes: data.notes,
-          completedAt: data.status === 'completed' ? new Date().toISOString() : undefined,
-        },
-      });
+      const now = new Date().toISOString();
+      const completedAt = data.status === 'completed' ? now : null;
+
+      logsDb.prepare(`
+        UPDATE redemptions SET status = ?, notes = ?, completedAt = ?, updatedAt = ? WHERE id = ?
+      `).run(data.status, data.notes || null, completedAt, now, data.id);
+
+      const redemption = logsDb.prepare('SELECT * FROM redemptions WHERE id = ?').get(data.id);
       return NextResponse.json(redemption);
     }
 

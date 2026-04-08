@@ -1,5 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import prisma from '@/lib/prisma';
+import { getAccountsDatabase, getRedemptioneLogsDatabase } from '@/lib/db';
+
+const accountsDb = getAccountsDatabase();
+const logsDb = getRedemptioneLogsDatabase();
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,15 +10,25 @@ export async function GET(request: NextRequest) {
     const customerId = searchParams.get('customerId');
     const email = searchParams.get('email');
 
-    let where = {};
-    if (customerId) where = { customerId };
-    if (email) where = { email };
+    let query = 'SELECT * FROM pointLedger';
+    const params = [];
 
-    const ledger = await prisma.pointLedger.findMany({
-      where,
-      orderBy: { createdAt: 'desc' },
-      include: { customer: true },
-    });
+    if (customerId || email) {
+      const conditions = [];
+      if (customerId) {
+        conditions.push('customerId = ?');
+        params.push(customerId);
+      }
+      if (email) {
+        conditions.push('email = ?');
+        params.push(email);
+      }
+      query += ' WHERE ' + conditions.join(' AND ');
+    }
+
+    query += ' ORDER BY createdAt DESC';
+
+    const ledger = logsDb.prepare(query).all(...params);
 
     return NextResponse.json(ledger);
   } catch (error) {
@@ -31,9 +44,7 @@ export async function POST(request: NextRequest) {
 
     if (action === 'add') {
       // Get current customer points
-      const customer = await prisma.customer.findUnique({
-        where: { id: data.customerId },
-      });
+      const customer = accountsDb.prepare('SELECT * FROM customers WHERE id = ?').get(data.customerId) as any;
 
       if (!customer) {
         return NextResponse.json({ error: 'Customer not found' }, { status: 404 });
@@ -43,28 +54,23 @@ export async function POST(request: NextRequest) {
       const balanceAfter = balanceBefore + data.amount;
 
       // Create ledger entry and update customer points in transaction
-      const result = await prisma.$transaction(async (tx) => {
-        const ledgerEntry = await tx.pointLedger.create({
-          data: {
-            customerId: data.customerId,
-            email: data.email,
-            amount: data.amount,
-            type: data.type,
-            description: data.description,
-            reference: data.reference,
-            balanceBefore,
-            balanceAfter,
-          },
-        });
+      const transaction = logsDb.transaction(() => {
+        const ledgerId = Math.random().toString(36).substr(2, 9);
+        const now = new Date().toISOString();
 
-        await tx.customer.update({
-          where: { id: data.customerId },
-          data: { points: balanceAfter },
-        });
+        logsDb.prepare(`
+          INSERT INTO pointLedger (id, customerId, email, amount, type, description, reference, balanceBefore, balanceAfter, createdAt)
+          VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        `).run(ledgerId, data.customerId, data.email, data.amount, data.type, data.description || null, data.reference || null, balanceBefore, balanceAfter, now);
 
-        return ledgerEntry;
+        accountsDb.prepare(`
+          UPDATE customers SET points = ?, updatedAt = ? WHERE id = ?
+        `).run(balanceAfter, now, data.customerId);
+
+        return logsDb.prepare('SELECT * FROM pointLedger WHERE id = ?').get(ledgerId);
       });
 
+      const result = transaction();
       return NextResponse.json(result);
     }
 
