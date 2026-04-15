@@ -217,7 +217,7 @@ export default function ForgotPasswordPage() {
               <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
                 <p className="text-sm text-slate-700 mb-3">Need more help?</p>
                 <p className="text-slate-900 font-semibold">
-                  📞 <a href="tel:+639123456789" className="hover:text-red-600 transition">0977 372 8945</a>
+                  <a href="tel:+639123456789" className="hover:text-red-600 transition">Phone: 0977 372 8945</a>
                 </p>
               </div>
             </div>
@@ -229,7 +229,7 @@ export default function ForgotPasswordPage() {
 }
                     className="inline-block px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition font-semibold text-sm"
                   >
-                    💬 Message on Facebook
+                    Message on Facebook
                   </a>
                 </div>
               </div>
@@ -247,10 +247,10 @@ export default function ForgotPasswordPage() {
                     Include your full name and email address, and we'll help you reset your password.
                   </p>
                   <a
-                    href="mailto:admin@enricos.com"
+                    href="mailto:admin@enricos.shop"
                     className="inline-block px-4 py-2 bg-slate-600 text-white rounded-lg hover:bg-slate-700 transition font-semibold text-sm"
                   >
-                    ✉️ admin@enricos.com
+                    admin@enricos.shop
                   </a>
                 </div>
               </div>
