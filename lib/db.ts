@@ -1,9 +1,7 @@
 import Database from 'better-sqlite3';
 import path from 'path';
 
-let accountsDb: Database.Database | null = null;
-let rewardsDb: Database.Database | null = null;
-let redemptionLogsDb: Database.Database | null = null;
+let db: Database.Database | null = null;
 
 // Initialize data directory
 function ensureDataDirectory() {
@@ -14,43 +12,35 @@ function ensureDataDirectory() {
   }
 }
 
-export function getAccountsDatabase() {
-  if (!accountsDb) {
+// Get unified database connection
+function getDatabase() {
+  if (!db) {
     ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'accounts.sqlite');
-    accountsDb = new Database(dbPath);
-    accountsDb.pragma('journal_mode = WAL');
-    accountsDb.pragma('foreign_keys = ON');
-    initializeAccountsDatabase(accountsDb);
+    const dbPath = path.join(process.cwd(), 'data', 'enricos.sqlite');
+    db = new Database(dbPath);
+    db.pragma('journal_mode = WAL');
+    db.pragma('foreign_keys = ON');
+    initializeDatabase(db);
   }
-  return accountsDb;
+  return db;
+}
+
+// Legacy functions for backward compatibility
+export function getAccountsDatabase() {
+  return getDatabase();
 }
 
 export function getRewardsDatabase() {
-  if (!rewardsDb) {
-    ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'rewards.sqlite');
-    rewardsDb = new Database(dbPath);
-    rewardsDb.pragma('journal_mode = WAL');
-    rewardsDb.pragma('foreign_keys = ON');
-    initializeRewardsDatabase(rewardsDb);
-  }
-  return rewardsDb;
+  return getDatabase();
 }
 
 export function getRedemptioneLogsDatabase() {
-  if (!redemptionLogsDb) {
-    ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'redemption_logs.sqlite');
-    redemptionLogsDb = new Database(dbPath);
-    redemptionLogsDb.pragma('journal_mode = WAL');
-    redemptionLogsDb.pragma('foreign_keys = ON');
-    initializeRedemptioneLogsDatabase(redemptionLogsDb);
-  }
-  return redemptionLogsDb;
+  return getDatabase();
 }
 
-export function initializeAccountsDatabase(database: Database.Database) {
+// Initialize all database tables in one unified database
+function initializeDatabase(database: Database.Database) {
+  // ====== ACCOUNTS TABLES ======
   // Create customers table
   database.exec(`
     CREATE TABLE IF NOT EXISTS customers (
@@ -106,19 +96,7 @@ export function initializeAccountsDatabase(database: Database.Database) {
     )
   `);
 
-  // Create indexes
-  database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
-    CREATE INDEX IF NOT EXISTS idx_customers_rfid ON customers(rfidCard);
-    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
-    CREATE INDEX IF NOT EXISTS idx_verify_token ON emailVerificationTokens(token);
-    CREATE INDEX IF NOT EXISTS idx_verify_email ON emailVerificationTokens(email);
-    CREATE INDEX IF NOT EXISTS idx_reset_token ON passwordResetTokens(token);
-    CREATE INDEX IF NOT EXISTS idx_reset_email ON passwordResetTokens(email);
-  `);
-}
-
-export function initializeRewardsDatabase(database: Database.Database) {
+  // ====== REWARDS TABLES ======
   database.exec(`
     CREATE TABLE IF NOT EXISTS rewards (
       id TEXT PRIMARY KEY,
@@ -134,13 +112,7 @@ export function initializeRewardsDatabase(database: Database.Database) {
     )
   `);
 
-  database.exec(`
-    CREATE INDEX IF NOT EXISTS idx_rewards_points ON rewards(points);
-    CREATE INDEX IF NOT EXISTS idx_rewards_category ON rewards(category);
-  `);
-}
-
-export function initializeRedemptioneLogsDatabase(database: Database.Database) {
+  // ====== REDEMPTION TABLES ======
   database.exec(`
     CREATE TABLE IF NOT EXISTS redemptions (
       id TEXT PRIMARY KEY,
@@ -174,7 +146,17 @@ export function initializeRedemptioneLogsDatabase(database: Database.Database) {
     )
   `);
 
+  // ====== CREATE ALL INDEXES ======
   database.exec(`
+    CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
+    CREATE INDEX IF NOT EXISTS idx_customers_rfid ON customers(rfidCard);
+    CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_verify_token ON emailVerificationTokens(token);
+    CREATE INDEX IF NOT EXISTS idx_verify_email ON emailVerificationTokens(email);
+    CREATE INDEX IF NOT EXISTS idx_reset_token ON passwordResetTokens(token);
+    CREATE INDEX IF NOT EXISTS idx_reset_email ON passwordResetTokens(email);
+    CREATE INDEX IF NOT EXISTS idx_rewards_points ON rewards(points);
+    CREATE INDEX IF NOT EXISTS idx_rewards_category ON rewards(category);
     CREATE INDEX IF NOT EXISTS idx_redemptions_customer ON redemptions(customerId);
     CREATE INDEX IF NOT EXISTS idx_redemptions_email ON redemptions(email);
     CREATE INDEX IF NOT EXISTS idx_redemptions_reward ON redemptions(rewardId);
