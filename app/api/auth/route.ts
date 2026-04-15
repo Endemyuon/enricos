@@ -3,7 +3,7 @@ import bcrypt from 'bcryptjs';
 import { getAccountsDatabase } from '@/lib/db';
 
 const db = getAccountsDatabase();
-const ADMIN_EMAILS = ['admin@example.com', 'enricocatolico03@gmail.com'];
+const ADMIN_EMAILS = ['admin@enricos.shop', 'enricocatolico03@gmail.com'];
 
 export async function POST(request: NextRequest) {
   try {
