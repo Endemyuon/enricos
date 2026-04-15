@@ -17,7 +17,7 @@ function ensureDataDirectory() {
 export function getAccountsDatabase() {
   if (!accountsDb) {
     ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'accounts.db');
+    const dbPath = path.join(process.cwd(), 'data', 'accounts.sqlite');
     accountsDb = new Database(dbPath);
     accountsDb.pragma('journal_mode = WAL');
     accountsDb.pragma('foreign_keys = ON');
@@ -29,7 +29,7 @@ export function getAccountsDatabase() {
 export function getRewardsDatabase() {
   if (!rewardsDb) {
     ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'rewards.db');
+    const dbPath = path.join(process.cwd(), 'data', 'rewards.sqlite');
     rewardsDb = new Database(dbPath);
     rewardsDb.pragma('journal_mode = WAL');
     rewardsDb.pragma('foreign_keys = ON');
@@ -41,7 +41,7 @@ export function getRewardsDatabase() {
 export function getRedemptioneLogsDatabase() {
   if (!redemptionLogsDb) {
     ensureDataDirectory();
-    const dbPath = path.join(process.cwd(), 'data', 'redemption_logs.db');
+    const dbPath = path.join(process.cwd(), 'data', 'redemption_logs.sqlite');
     redemptionLogsDb = new Database(dbPath);
     redemptionLogsDb.pragma('journal_mode = WAL');
     redemptionLogsDb.pragma('foreign_keys = ON');
