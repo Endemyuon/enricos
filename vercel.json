@@ -1,7 +1,0 @@
-{
-  "buildCommand": "next build",
-  "installCommand": "npm install",
-  "env": {
-    "DATABASE_URL": "@DATABASE_URL"
-  }
-}
