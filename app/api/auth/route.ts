@@ -29,20 +29,25 @@ export async function POST(request: NextRequest) {
         const now = new Date().toISOString();
         const fullName = `${data.firstName} ${data.lastName}`.trim();
         
-        db.prepare('INSERT INTO users (id, email, password, firstName, lastName, role, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-          userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', now
+        // Create unverified user
+        db.prepare('INSERT INTO users (id, email, password, firstName, lastName, role, emailVerified, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
+          userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', 0, now
         );
         
+        // Create customer record
         db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
           userId, fullName, email, 0, now.split('T')[0], now, now
         );
 
         return NextResponse.json({ 
           success: true, 
-          user: { email, role: 'customer', id: userId, name: fullName }, 
-          customer: { id: userId, name: fullName, email, points: 0 } 
+          requiresVerification: true,
+          user: { email, role: 'customer', id: userId, name: fullName, emailVerified: false }, 
+          customer: { id: userId, name: fullName, email, points: 0 },
+          message: 'Registration successful. Please check your email to verify your account.' 
         });
       } catch (e) {
+        console.error('Registration error:', e);
         return NextResponse.json({ error: 'Registration failed' }, { status: 500 });
       }
     }
@@ -96,6 +101,16 @@ export async function POST(request: NextRequest) {
 
       if (await bcrypt.compare(password, user.password)) {
         console.log('✅ Customer login');
+        
+        // Check if email is verified
+        if (!user.emailVerified) {
+          return NextResponse.json({ 
+            error: 'Email not verified', 
+            requiresVerification: true,
+            email: user.email
+          }, { status: 403 });
+        }
+        
         // Get customer data to fetch the full name
         const customer = db.prepare('SELECT name FROM customers WHERE email = ?').get(email) as any;
         const fullName = customer?.name || `${user.firstName} ${user.lastName}`.trim() || email.split('@')[0];

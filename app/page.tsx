@@ -180,6 +180,61 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-white">
+      <style>{`
+        /* Mobile responsive improvements */
+        @media (max-width: 768px) {
+          .min-h-screen {
+            min-height: 100vh;
+          }
+          section {
+            padding: 2rem 1rem !important;
+          }
+          h1, h2, h3, h4 {
+            word-break: break-word;
+          }
+          iframe {
+            max-width: 100% !important;
+            height: auto !important;
+          }
+          .facebook-post-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
+            height: 350px;
+            background: #f9f9f9;
+            padding: 0 !important;
+            overflow: hidden;
+          }
+          .fb-post {
+            width: 100% !important;
+            max-width: 100% !important;
+          }
+          .grid {
+            gap: 1rem !important;
+          }
+        }
+        
+        @media (max-width: 640px) {
+          section {
+            padding: 1.5rem 0.75rem !important;
+          }
+          .max-w-7xl {
+            padding: 0 0.5rem;
+          }
+          button {
+            font-size: 0.875rem;
+            padding: 0.5rem 1rem;
+          }
+          h1 {
+            font-size: 1.875rem !important;
+          }
+          h2 {
+            font-size: 1.5rem !important;
+          }
+        }
+      `}</style>
+      
       {/* Loading Spinner */}
       {isLoading && <LoadingSpinner />}
 
@@ -338,24 +393,24 @@ export default function HomePage() {
         {/* Open Button */}
         <button
           onClick={() => setSidebarOpen(true)}
-          className={`fixed top-4 left-4 z-30 p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-500 hover:shadow-xl hover:scale-110 ${
+          className={`fixed top-3 sm:top-4 left-3 sm:left-4 z-30 p-2 sm:p-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-all duration-500 hover:shadow-xl hover:scale-110 ${
             showTopButtons ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
           }`}
           style={{
             transitionTimingFunction: 'cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
-          <Menu className="w-6 h-6" />
+          <Menu className="w-5 sm:w-6 h-5 sm:h-6" />
         </button>
 
         {/* Login Button (Top Right) */}
         {!isLoggedIn && (
           <Link href="/login">
-            <button className={`fixed top-4 right-4 z-30 px-6 py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-xl shadow-lg hover:shadow-xl hover:from-red-700 hover:to-red-800 transition-all duration-500 flex items-center gap-2 border border-red-500/30 backdrop-blur-sm ${
+            <button className={`fixed top-3 sm:top-4 right-3 sm:right-4 z-30 px-3 sm:px-6 py-2 sm:py-3 bg-gradient-to-r from-red-600 to-red-700 text-white font-medium rounded-lg sm:rounded-xl shadow-lg hover:shadow-xl hover:from-red-700 hover:to-red-800 transition-all duration-500 flex items-center gap-2 border border-red-500/30 backdrop-blur-sm text-xs sm:text-sm ${
               showTopButtons ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-4 pointer-events-none'
             }`}>
-              <User className="w-5 h-5" />
-              <span>Sign In</span>
+              <User className="w-4 sm:w-5 h-4 sm:h-5" />
+              <span className="hidden sm:inline">Sign In</span>
             </button>
           </Link>
         )}
@@ -363,80 +418,80 @@ export default function HomePage() {
       {/* Hero Section */}
       {isLoggedIn ? (
         // Logged In Dashboard Section
-        <section className="bg-white text-slate-900 py-16 px-6">
+        <section className="bg-white text-slate-900 py-6 sm:py-12 md:py-16 px-3 sm:px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="flex flex-col md:flex-row gap-8">
+            <div className="flex flex-col lg:flex-row gap-4 sm:gap-6 md:gap-8">
               {/* Welcome Card */}
-              <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-8 shadow-lg">
-                <p className="text-slate-600 text-sm font-semibold uppercase tracking-widest mb-2">Welcome Back</p>
-                <h2 className="text-4xl md:text-5xl font-bold mb-4 text-slate-900">{userName || 'Guest'}</h2>
-                <span className="inline-block bg-red-100 text-red-700 text-sm font-semibold px-4 py-2 rounded-full border border-red-200">Customer</span>
+              <div className="flex-1 bg-white border border-slate-200 rounded-lg sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg">
+                <p className="text-slate-600 text-xs sm:text-sm font-semibold uppercase tracking-widest mb-2">Welcome Back</p>
+                <h2 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold mb-4 text-slate-900">{userName || 'Guest'}</h2>
+                <span className="inline-block bg-red-100 text-red-700 text-xs sm:text-sm font-semibold px-3 sm:px-4 py-2 rounded-full border border-red-200">Customer</span>
               </div>
 
               {/* Points Card */}
-              <div className="flex-1 bg-white border border-slate-200 rounded-2xl p-8 shadow-lg flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <Image src="/enricos.png" alt="Enricos" width={60} height={60} className="rounded" />
+              <div className="flex-1 bg-white border border-slate-200 rounded-lg sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg flex flex-col sm:flex-row items-center justify-between gap-4">
+                <div className="flex items-center gap-2 sm:gap-3 w-full sm:w-auto">
+                  <Image src="/enricos.png" alt="Enricos" width={60} height={60} className="rounded w-12 sm:w-[60px]" />
                   <div>
-                    <p className="text-slate-600 text-sm font-semibold uppercase tracking-widest">Your Points</p>
-                    <p className="text-5xl font-bold text-red-600">{userPoints}</p>
+                    <p className="text-slate-600 text-xs sm:text-sm font-semibold uppercase tracking-widest">Your Points</p>
+                    <p className="text-3xl sm:text-4xl md:text-5xl font-bold text-red-600">{userPoints}</p>
                   </div>
                 </div>
-                <div className="flex flex-col gap-3 items-stretch">
+                <div className="flex flex-col gap-2 sm:gap-3 items-stretch w-full sm:w-auto">
                   <Link href="/rewards">
-                    <button className="w-full px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg">
+                    <button className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg text-sm sm:text-base">
                       Redeem Rewards
                     </button>
                   </Link>
-                  <a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="w-full px-6 py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2">
-                    <Facebook className="w-5 h-5" />
+                  <a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="w-full px-4 sm:px-6 py-2 sm:py-3 bg-blue-600 text-white font-bold rounded-lg hover:bg-blue-700 transition shadow-lg flex items-center justify-center gap-2 text-sm sm:text-base">
+                    <Facebook className="w-4 sm:w-5 h-4 sm:h-5" />
                     Find us on Facebook
                   </a>
                 </div>
               </div>
             </div>
 
-            <div className="mt-8 grid md:grid-cols-3 gap-6">
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
-                <div style={{ width: '100%', minHeight: '500px', display: 'flex' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid029Co54bkMDCQZidFyCCBN45kCtGNF4xBpAAqvRU2aENqcrmxCqSNxErZYfmgDDQW2l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0 }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+            <div className="mt-6 sm:mt-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4 md:gap-6">
+              <div className="bg-white border border-slate-200 rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition">
+                <div style={{ width: '100%', height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backgroundColor: '#f9f9f9' }}>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid029Co54bkMDCQZidFyCCBN45kCtGNF4xBpAAqvRU2aENqcrmxCqSNxErZYfmgDDQW2l&show_text=false&width=500" width="500" height="350" style={{ border: 'none', maxWidth: '100%', marginLeft: 'auto', marginRight: 'auto' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
-                <div style={{ width: '100%', minHeight: '500px', display: 'flex' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid06nnjDEiYK8D6gxtd6Gjq1FzQ4QrqYSQRrYTyBpyT1MmtqJKi8GSsqKCHbdqk8eckl&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0 }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+              <div className="bg-white border border-slate-200 rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition">
+                <div style={{ width: '100%', height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backgroundColor: '#f9f9f9' }}>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid06nnjDEiYK8D6gxtd6Gjq1FzQ4QrqYSQRrYTyBpyT1MmtqJKi8GSsqKCHbdqk8eckl&show_text=false&width=500" width="500" height="350" style={{ border: 'none', maxWidth: '100%', marginLeft: 'auto', marginRight: 'auto' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
-              <div className="bg-white border border-slate-200 rounded-2xl overflow-hidden shadow-lg hover:shadow-xl transition">
-                <div style={{ width: '100%', minHeight: '500px', display: 'flex' }}>
-                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid032H1ZgzpS9dpTaMbc96E9Grj39qkikgrBs4Xr6sETzscV4qCEWCDJqYrZr8ydADi6l&show_text=false&width=500" width="100%" height="100%" style={{ border: 'none', margin: 0, padding: 0 }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
+              <div className="bg-white border border-slate-200 rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition">
+                <div style={{ width: '100%', height: '350px', display: 'flex', justifyContent: 'center', alignItems: 'center', overflow: 'hidden', backgroundColor: '#f9f9f9' }}>
+                  <iframe src="https://www.facebook.com/plugins/post.php?href=https%3A%2F%2Fwww.facebook.com%2FEnricosMarikina%2Fposts%2Fpfbid032H1ZgzpS9dpTaMbc96E9Grj39qkikgrBs4Xr6sETzscV4qCEWCDJqYrZr8ydADi6l&show_text=false&width=500" width="500" height="350" style={{ border: 'none', maxWidth: '100%', marginLeft: 'auto', marginRight: 'auto' }} scrolling="no" frameBorder="0" allowFullScreen={true} allow="autoplay; clipboard-write; encrypted-media; picture-in-picture; web-share"></iframe>
                 </div>
               </div>
             </div>
 
             {/* RFID Card Registration Section */}
             {!userRfidCard && (
-              <div className="mt-12 bg-white border border-slate-200 rounded-2xl p-8 shadow-lg">
-                <div className="flex items-start gap-4">
+              <div className="mt-6 sm:mt-8 md:mt-12 bg-white border border-slate-200 rounded-lg sm:rounded-2xl p-4 sm:p-6 md:p-8 shadow-lg">
+                <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-4">
                   <div className="flex-shrink-0">
                     <div className="p-3 bg-red-100 rounded-lg">
-                      <Smartphone className="w-6 h-6 text-red-600" />
+                      <Smartphone className="w-5 sm:w-6 h-5 sm:h-6 text-red-600" />
                     </div>
                   </div>
-                  <div className="flex-1">
-                    <h3 className="text-2xl font-bold text-slate-900 mb-2">Register Your RFID Card</h3>
-                    <p className="text-slate-600 mb-6">Link your Enrico's Loyalty Card </p>
-                    <div className="flex gap-3">
+                  <div className="flex-1 w-full">
+                    <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Register Your RFID Card</h3>
+                    <p className="text-slate-600 mb-4 sm:mb-6 text-sm sm:text-base">Link your Enrico's Loyalty Card </p>
+                    <div className="flex flex-col sm:flex-row gap-2 sm:gap-3">
                       <input
                         type="text"
                         value={rfidInput}
                         onChange={(e) => setRfidInput(e.target.value)}
                         placeholder="Enter RFID card serial number"
-                        className="flex-1 px-4 py-3 bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-600 transition"
+                        className="flex-1 px-3 sm:px-4 py-2 sm:py-3 bg-white border border-slate-200 rounded-lg text-slate-900 placeholder-slate-400 focus:outline-none focus:border-red-600 transition text-sm sm:text-base"
                       />
                       <button
                         onClick={handleRegisterRfidCard}
-                        className="px-6 py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg"
+                        className="px-4 sm:px-6 py-2 sm:py-3 bg-red-600 text-white font-bold rounded-lg hover:bg-red-700 transition shadow-lg text-sm sm:text-base whitespace-nowrap"
                       >
                         Register
                       </button>
@@ -470,24 +525,24 @@ export default function HomePage() {
         </section>
       ) : (
         // Non-Logged In Marketing Section
-        <section className="bg-white text-slate-900 py-12 px-6">
+        <section className="bg-white text-slate-900 py-12 px-4 md:px-6">
           <div className="max-w-7xl mx-auto text-center">
-            <div className="mb-8 flex justify-center">
+            <div className="mb-6 md:mb-8 flex justify-center">
               <Image
                 src="/enricos.png"
                 alt="Enrico's Logo"
                 width={280}
                 height={280}
-                className="rounded-lg"
+                className="rounded-lg w-auto h-auto"
               />
             </div>
             <div className="mb-6 inline-block">
               <span className="text-sm font-semibold text-red-600 uppercase tracking-widest"></span>
             </div>
-            <h1 className="text-5xl md:text-6xl font-bold mb-6 leading-tight mitr-semibold">
+            <h1 className="text-4xl md:text-5xl lg:text-6xl font-bold mb-6 leading-tight mitr-semibold">
               Earn Rewards for <span className="text-red-600">Every Bite</span>
             </h1>
-            <p className="text-xl text-slate-900 font-bold mb-8 max-w-2xl mx-auto mitr-semibold">
+            <p className="text-lg md:text-xl text-slate-900 font-bold mb-8 max-w-2xl mx-auto mitr-semibold">
               Welcome to Enrico's It's All About Food! 
             </p>
           </div>
@@ -496,9 +551,9 @@ export default function HomePage() {
 
       {/* Premium Register Section */}
       {!isLoggedIn && (
-        <section className="bg-white py-12 px-6">
+        <section className="bg-white py-12 md:py-16 px-4 md:px-6">
           <div className="max-w-7xl mx-auto">
-            <div className="grid md:grid-cols-2 gap-16 items-start">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-8 md:gap-16 items-start">
               {/* Left Side - Available Rewards */}
               <div>
                 <div className="mb-10">
@@ -608,40 +663,33 @@ export default function HomePage() {
 
       {/* Three Benefits Section */}
       {!isLoggedIn && (
-        <section className="py-20 px-6 bg-gradient-to-b from-slate-50 to-white">
+        <section className="py-8 sm:py-12 md:py-20 px-3 sm:px-4 md:px-6 bg-gradient-to-b from-slate-50 to-white">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-16">
-              <h2 className="text-5xl font-bold text-slate-900 mb-4 mitr-semibold"> </h2>
-              <br></br>
-              <a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-3 px-6 py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg">
-                <Facebook className="w-5 h-5" />
-                Like & Follow Us on Facebook
+            <div className="text-center mb-8 sm:mb-10 md:mb-16">
+              <h2 className="text-3xl sm:text-4xl md:text-5xl font-bold text-slate-900 mb-4 mitr-semibold"> </h2>
+              <a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-2 md:gap-3 px-3 sm:px-4 md:px-6 py-2 md:py-3 bg-blue-600 text-white font-semibold rounded-lg hover:bg-blue-700 transition shadow-lg text-xs sm:text-sm md:text-base">
+                <Facebook className="w-4 h-4 md:w-5 md:h-5" />
+                <span className="hidden sm:inline">Like & Follow Us on Facebook</span>
+                <span className="sm:hidden">Follow Us</span>
               </a>
             </div>
-            <div id="fb-root"></div>
-            <style>{`
-              .facebook-post-container {
-                display: flex;
-                justify-content: center;
-                width: 100%;
-              }
-              .fb-post {
-                max-width: 500px !important;
-              }
-            `}</style>
-            <div className="grid md:grid-cols-2 gap-8">
-              {/* Photo 1 */}
-              <div className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 border border-slate-100">
-                <div className="facebook-post-container p-4">
-                  <div className="fb-post" data-href="https://www.facebook.com/photo/?fbid=898297172929935"></div>
-                </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6 md:gap-8">
+              {/* Post Image 1 */}
+              <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition duration-300 border border-slate-200 group">
+                <img
+                  src="/post1.jpg"
+                  alt="Enrico's Post 1"
+                  className="w-full aspect-square object-cover group-hover:scale-105 transition duration-300"
+                />
               </div>
 
-              {/* Photo 2 */}
-              <div className="bg-white rounded-3xl overflow-hidden shadow-lg hover:shadow-2xl transition duration-300 border border-slate-100">
-                <div className="facebook-post-container p-4">
-                  <div className="fb-post" data-href="https://www.facebook.com/photo?fbid=908365841923068"></div>
-                </div>
+              {/* Post Image 2 */}
+              <div className="bg-white rounded-lg sm:rounded-xl overflow-hidden shadow-md hover:shadow-lg transition duration-300 border border-slate-200 group">
+                <img
+                  src="/post2.jpg"
+                  alt="Enrico's Post 2"
+                  className="w-full aspect-square object-cover group-hover:scale-105 transition duration-300"
+                />
               </div>
             </div>
           </div>
@@ -650,10 +698,10 @@ export default function HomePage() {
 
       {/* How It Works Section */}
       {!isLoggedIn && (
-        <section className="py-16 px-6 bg-white">
+        <section className="py-12 md:py-16 px-4 md:px-6 bg-white">
           <div className="max-w-7xl mx-auto">
-          <h2 className="text-4xl font-bold text-center mb-12 text-black mitr-semibold">How It Works</h2>
-          <div className="grid md:grid-cols-3 gap-8">
+          <h2 className="text-3xl md:text-4xl font-bold text-center mb-8 md:mb-12 text-black mitr-semibold">How It Works</h2>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 md:gap-8">
             {[
               { icon: UserPlus, title: 'Create Your Account', desc: 'Join our rewards program in seconds' },
               { icon: Utensils, title: 'Dine & Earn', desc: 'Earn 1 point per 600 pesos on every purchase' },
@@ -679,39 +727,40 @@ export default function HomePage() {
 
       {/* CTA Section */}
       {!isLoggedIn && (
-        <section className="py-16 px-6 bg-white">
+        <section className="py-12 md:py-16 px-4 md:px-6 bg-white">
           <div className="max-w-7xl mx-auto text-center">
-          <h2 className="text-4xl font-bold mb-4 text-slate-900 mitr-semibold">Order Now! Rewards Await!</h2>
-          <p className="text-slate-600 text-lg mb-8">   </p>
-          <div className="flex gap-4 justify-center mb-16">
+          <h2 className="text-3xl md:text-4xl font-bold mb-4 text-slate-900 mitr-semibold">Order Now! Rewards Await!</h2>
+          <p className="text-slate-600 text-base md:text-lg mb-6 md:mb-8">   </p>
+          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 justify-center mb-12 md:mb-16">
 
             <Link
               href="/login"
-              className="px-8 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition font-semibold"
+              className="px-6 md:px-8 py-3 border-2 border-red-600 text-red-600 rounded-lg hover:bg-red-50 transition font-semibold text-center w-full sm:w-auto"
             >
               Sign In
             </Link>
             <Link
               href="/register"
-              className="px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold"
+              className="px-6 md:px-8 py-3 bg-red-600 text-white rounded-lg hover:bg-red-700 transition font-semibold text-center w-full sm:w-auto"
             >
               Create Account
             </Link>
           </div>
 
           {/* Location Section */}
-          <div className="mt-12">
-            <h3 className="text-2xl font-bold text-slate-900 mb-6">Visit Us Today!</h3>
+          <div className="mt-8 md:mt-12">
+            <h3 className="text-xl md:text-2xl font-bold text-slate-900 mb-4 md:mb-6">Visit Us Today!</h3>
             <div className="mx-auto max-w-2xl rounded-2xl overflow-hidden border-2 border-slate-200 shadow-lg hover:shadow-xl transition-shadow duration-500">
-              <iframe
-                src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3862.6823898892267!2d121.07814972346887!3d14.63225934248699!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b93f3cd7ea99%3A0x4f05b490b335ae63!2sEnrico%E2%80%99s!5e0!3m2!1sen!2sph!4v1678901234567"
-                width="100%"
-                height="400"
-                style={{ border: 0, borderRadius: '8px' }}
-                allowFullScreen={true}
-                loading="lazy"
-                referrerPolicy="no-referrer-when-downgrade"
-              ></iframe>
+              <div style={{ paddingBottom: '66.66%', position: 'relative', height: 0, overflow: 'hidden' }}>
+                <iframe
+                  src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3862.6823898892267!2d121.07814972346887!3d14.63225934248699!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x3397b93f3cd7ea99%3A0x4f05b490b335ae63!2sEnrico%E2%80%99s!5e0!3m2!1sen!2sph!4v1678901234567"
+                  width="100%"
+                  style={{ border: 0, borderRadius: '8px', position: 'absolute', top: 0, left: 0, width: '100%', height: '100%' }}
+                  allowFullScreen={true}
+                  loading="lazy"
+                  referrerPolicy="no-referrer-when-downgrade"
+                ></iframe>
+              </div>
             </div>
             <p className="text-slate-600 text-sm mt-4">📍 62 A Bonifacio Ave, Barangka Marikina, Metro Manila</p>
           </div>
@@ -720,13 +769,13 @@ export default function HomePage() {
       )}
 
       {/* Footer */}
-      <footer className="bg-black text-slate-200 py-16 px-6">
+      <footer className="bg-black text-slate-200 py-8 sm:py-10 px-4 sm:px-6">
         <div className="max-w-7xl mx-auto">
           {/* Premium Footer Content */}
-          <div className="grid md:grid-cols-4 gap-12 mb-12">
+          <div className="grid md:grid-cols-4 gap-6 sm:gap-8 mb-6 sm:mb-8">
             {/* Brand Section */}
             <div>
-              <div className="flex items-center gap-3 mb-6">
+              <div className="flex items-center gap-3 mb-3">
                 <Image
                   src="/enricos.png"
                   alt="Enrico's Logo"
@@ -734,23 +783,23 @@ export default function HomePage() {
                   height={36}
                   className="rounded-lg"
                 />
-                <span className="text-2xl font-bold text-white">Enrico's</span>
+                <span className="text-xl sm:text-2xl font-bold text-white">Enrico's</span>
               </div>
-              <p className="text-slate-300 text-sm leading-relaxed font-semibold italic mb-4">"It's All About Food!"</p>
-              <p className="text-slate-400 text-xs leading-relaxed mb-6">A family restaurant dedicated to delivering authentic, delicious meals with heart and tradition.</p>
-              <div className="bg-red-600/20 rounded-lg p-3 text-xs">
-                <p className="text-red-400 font-semibold mb-2">Free Delivery!</p>
-                <p className="text-slate-300">Within Barangka, Marikina</p>
+              <p className="text-slate-300 text-xs sm:text-sm leading-relaxed font-semibold italic mb-2">\"It's All About Food!\"</p>
+              <p className="text-slate-400 text-xs leading-relaxed mb-4">A family restaurant dedicated to delivering authentic, delicious meals with heart and tradition.</p>
+              <div className="bg-red-600/20 rounded-lg p-2 sm:p-3 text-xs">
+                <p className="text-red-400 font-semibold mb-1">Free Delivery!</p>
+                <p className="text-slate-300 text-xs">Within Barangka, Marikina</p>
               </div>
             </div>
 
             {/* Restaurant Links */}
             <div>
-              <h4 className="font-bold text-white mb-6 flex items-center gap-2">
-                <div className="w-1 h-5 bg-red-600 rounded-full"></div>
+              <h4 className="font-bold text-white mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="w-1 h-4 bg-red-600 rounded-full"></div>
                 About Us
               </h4>
-              <ul className="text-sm space-y-3">
+              <ul className="text-xs sm:text-sm space-y-2">
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Our Story</a></li>
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Our Menu</a></li>
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Quality & Taste</a></li>
@@ -760,11 +809,11 @@ export default function HomePage() {
 
             {/* Services */}
             <div>
-              <h4 className="font-bold text-white mb-6 flex items-center gap-2">
-                <div className="w-1 h-5 bg-red-600 rounded-full"></div>
+              <h4 className="font-bold text-white mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="w-1 h-4 bg-red-600 rounded-full"></div>
                 Services
               </h4>
-              <ul className="text-sm space-y-3">
+              <ul className="text-xs sm:text-sm space-y-2">
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Dine In</a></li>
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Delivery</a></li>
                 <li><a href="https://www.facebook.com/EnricosMarikina" target="_blank" rel="noopener noreferrer" className="text-slate-400 hover:text-red-500 transition duration-300">Catering</a></li>
@@ -774,21 +823,21 @@ export default function HomePage() {
 
             {/* Contact */}
             <div>
-              <h4 className="font-bold text-white mb-6 flex items-center gap-2">
-                <div className="w-1 h-5 bg-red-600 rounded-full"></div>
+              <h4 className="font-bold text-white mb-3 sm:mb-4 flex items-center gap-2 text-sm sm:text-base">
+                <div className="w-1 h-4 bg-red-600 rounded-full"></div>
                 Contact Us
               </h4>
-              <ul className="text-sm space-y-4">
+              <ul className="text-xs sm:text-sm space-y-2">
                 <li>
-                  <p className="text-slate-400 mb-1">📞 Phone</p>
-                  <a href="tel:09773728945" className="text-red-500 font-semibold hover:text-red-400 transition duration-300">0977 372 8945</a>
+                  <p className="text-slate-400 mb-0.5">📞 Phone</p>
+                  <a href="tel:09773728945" className="text-red-500 font-semibold hover:text-red-400 transition duration-300 text-xs sm:text-sm">0977 372 8945</a>
                 </li>
                 <li>
-                  <p className="text-slate-400 mb-1">📍 Location</p>
+                  <p className="text-slate-400 mb-0.5">📍 Location</p>
                   <p className="text-slate-300 text-xs">62 A Bonifacio Ave, Barangka Marikina, Metro Manila</p>
                 </li>
                 <li>
-                  <p className="text-slate-400 mb-1">🕐 Hours</p>
+                  <p className="text-slate-400 mb-0.5">🕐 Hours</p>
                   <p className="text-slate-300 text-xs">Open 10AM to 9PM Daily</p>
                 </li>
               </ul>
@@ -796,19 +845,19 @@ export default function HomePage() {
           </div>
 
           {/* Premium Divider */}
-          <div className="border-t border-slate-800 my-8"></div>
+          <div className="border-t border-slate-800 my-4 sm:my-6"></div>
 
           {/* Copyright & Social */}
           <div className="text-center">
-            <p className="text-slate-400 text-sm mb-4">© 2026 <span className="text-red-500 font-bold">Enrico's Restaurant</span> - Bringing Families Together</p>
-            <div className="flex justify-center gap-4 pt-3">
-              <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
+            <p className="text-slate-400 text-xs sm:text-sm mb-3">© 2026 <span className="text-red-500 font-bold">Enrico's Restaurant</span> - Bringing Families Together</p>
+            <div className="flex justify-center gap-3 pt-2">
+              <div className="w-7 h-7 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
               </div>
-              <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
+              <div className="w-7 h-7 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
               </div>
-              <div className="w-8 h-8 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
+              <div className="w-7 h-7 bg-red-600/20 rounded-full flex items-center justify-center hover:bg-red-600/30 transition cursor-pointer">
                 <div className="w-2 h-2 bg-red-500 rounded-full"></div>
               </div>
             </div>

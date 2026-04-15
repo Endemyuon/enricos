@@ -1,7 +1,6 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono, Mitr } from "next/font/google";
 import "./globals.css";
-
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -19,6 +18,13 @@ const mitr = Mitr({
   subsets: ["latin"],
 });
 
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  userScalable: true,
+};
+
 export const metadata: Metadata = {
   title: "Enrico's Restaurant - Loyalty Rewards Program",
   description: "Earn points on every purchase and unlock exclusive rewards at Enrico's Restaurant. Join our loyalty program today!",
@@ -30,6 +36,11 @@ export const metadata: Metadata = {
     apple: { url: "/enricos.png", sizes: "180x180" },
   },
   manifest: "/site.webmanifest",
+  appleMobileWebAppCapable: true,
+  appleMobileWebAppStatusBarStyle: 'black-translucent',
+  formatDetection: {
+    telephone: true,
+  },
 };
 
 export default function RootLayout({
@@ -40,6 +51,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
+        <meta charSet="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+        <meta name="theme-color" content="#dc2626" />
         <link rel="icon" href="/enricos.ico" type="image/x-icon" />
         <link rel="apple-touch-icon" href="/enricos.png" />
         <link rel="shortcut icon" href="/enricos.ico" type="image/x-icon" />

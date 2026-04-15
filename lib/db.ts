@@ -75,7 +75,34 @@ export function initializeAccountsDatabase(database: Database.Database) {
       firstName TEXT,
       lastName TEXT,
       role TEXT DEFAULT 'customer',
+      emailVerified INTEGER DEFAULT 0,
       createdAt TEXT NOT NULL
+    )
+  `);
+
+  // Create email verification tokens table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS emailVerificationTokens (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      userId TEXT,
+      expiresAt TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      verifiedAt TEXT
+    )
+  `);
+
+  // Create password reset tokens table
+  database.exec(`
+    CREATE TABLE IF NOT EXISTS passwordResetTokens (
+      id TEXT PRIMARY KEY,
+      email TEXT NOT NULL,
+      token TEXT NOT NULL UNIQUE,
+      userId TEXT,
+      expiresAt TEXT NOT NULL,
+      createdAt TEXT NOT NULL,
+      usedAt TEXT
     )
   `);
 
@@ -84,6 +111,10 @@ export function initializeAccountsDatabase(database: Database.Database) {
     CREATE INDEX IF NOT EXISTS idx_customers_email ON customers(email);
     CREATE INDEX IF NOT EXISTS idx_customers_rfid ON customers(rfidCard);
     CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
+    CREATE INDEX IF NOT EXISTS idx_verify_token ON emailVerificationTokens(token);
+    CREATE INDEX IF NOT EXISTS idx_verify_email ON emailVerificationTokens(email);
+    CREATE INDEX IF NOT EXISTS idx_reset_token ON passwordResetTokens(token);
+    CREATE INDEX IF NOT EXISTS idx_reset_email ON passwordResetTokens(email);
   `);
 }
 

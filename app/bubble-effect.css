@@ -1,0 +1,54 @@
+/* Bubble Effect Animation Styles */
+
+.bubble-effect-container {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: visible;
+}
+
+.circle {
+  position: absolute;
+  display: flex;
+  gap: 4px;
+}
+
+.circle.top-left {
+  top: 0;
+  left: 0;
+  flex-direction: column-reverse;
+}
+
+.circle.bottom-right {
+  bottom: 0;
+  right: 0;
+  flex-direction: column;
+}
+
+.circle-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: currentColor;
+  opacity: 0.6;
+  position: absolute;
+}
+
+.circle.top-left .circle-dot {
+  opacity: 0.8;
+}
+
+.circle.bottom-right .circle-dot {
+  opacity: 0.8;
+}
+
+/* Ensure buttons with bubble effects maintain proper positioning */
+button[data-bubble-effect],
+.bubble-effect-button {
+  position: relative;
+  overflow: visible;
+}
+
+.hover\:scale-105:hover {
+  /* Already handled by Tailwind */
+}

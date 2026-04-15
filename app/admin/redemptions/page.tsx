@@ -368,7 +368,7 @@ export default function RedempionsPage() {
                           <h3 className="text-lg font-bold text-slate-900 mb-1">{redemption.customerName}</h3>
                           <p className="text-sm text-slate-600 mb-3">{redemption.email}</p>
 
-                          <div className="flex gap-4 mb-4">
+                          <div className="flex gap-4 mb-4 flex-wrap">
                             <div>
                               <p className="text-xs text-slate-500 uppercase font-bold">Reward Claimed</p>
                               <p className="text-lg font-semibold text-slate-900">{redemption.rewardTitle}</p>
@@ -383,6 +383,14 @@ export default function RedempionsPage() {
                                 {new Date(redemption.redeemedAt).toLocaleDateString()}
                               </p>
                             </div>
+                          </div>
+
+                          <div className="mb-4 p-4 bg-blue-50 border-2 border-blue-300 rounded-lg">
+                            <p className="text-xs text-blue-700 uppercase font-bold mb-2">Verification Code</p>
+                            <div className="bg-white p-3 rounded border border-blue-200 font-mono text-sm font-bold text-slate-900 break-all">
+                              {redemption.id}
+                            </div>
+                            <p className="text-xs text-blue-600 mt-2">Customer must present this code for verification</p>
                           </div>
                         </div>
 
