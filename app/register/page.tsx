@@ -185,7 +185,7 @@ export default function RegisterPage() {
           firstName: formData.firstName,
           lastName: formData.lastName,
           rfidCard: formData.rfidCard || null,
-          agreeToTerms: formData.agreeToTerms,
+          agreeToTermsAndPrivacy: formData.agreeToTermsAndPrivacy,
         }),
       });
 

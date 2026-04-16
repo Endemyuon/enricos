@@ -23,6 +23,7 @@ export const viewport: Viewport = {
   initialScale: 1,
   maximumScale: 5,
   userScalable: true,
+  colorScheme: 'light',
 };
 
 export const metadata: Metadata = {
@@ -36,8 +37,6 @@ export const metadata: Metadata = {
     apple: { url: "/enricos.png", sizes: "180x180" },
   },
   manifest: "/site.webmanifest",
-  appleMobileWebAppCapable: true,
-  appleMobileWebAppStatusBarStyle: 'black-translucent',
   formatDetection: {
     telephone: true,
   },
