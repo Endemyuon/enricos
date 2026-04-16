@@ -205,8 +205,8 @@ export async function POST(request: NextRequest) {
       try {
         const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-        // Update password
-        db.prepare('UPDATE users SET password = ? WHERE email = ?').run(
+        // Update password and verify email
+        db.prepare('UPDATE users SET password = ?, emailVerified = 1 WHERE email = ?').run(
           hashedPassword,
           resetRecord.email
         );
@@ -219,8 +219,9 @@ export async function POST(request: NextRequest) {
 
         return NextResponse.json({ 
           success: true, 
-          message: 'Password reset successfully',
-          email: resetRecord.email
+          message: 'Password reset successfully. Email verified!',
+          email: resetRecord.email,
+          emailVerified: true
         });
       } catch (error) {
         console.error('Error resetting password:', error);
