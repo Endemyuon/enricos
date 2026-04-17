@@ -23,9 +23,9 @@ export async function POST(request: NextRequest) {
       const now = new Date().toISOString();
 
       db.prepare(`
-        INSERT INTO rewards (id, title, description, expiry, imgUrl, points, quantity, category, createdAt, updatedAt)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(id, data.title, data.description || null, data.expiry || null, data.imgUrl || null, data.points || 0, data.quantity || 0, data.category || null, now, now);
+        INSERT INTO rewards (id, title, description, imgUrl, points, quantity, category, createdAt, updatedAt)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
+      `).run(id, data.title, data.description || null, data.imgUrl || null, data.points || 0, data.quantity || 0, data.category || null, now, now);
 
       const reward = db.prepare('SELECT * FROM rewards WHERE id = ?').get(id);
       return NextResponse.json(reward);
@@ -35,9 +35,9 @@ export async function POST(request: NextRequest) {
       const now = new Date().toISOString();
       db.prepare(`
         UPDATE rewards
-        SET title = ?, description = ?, expiry = ?, imgUrl = ?, points = ?, quantity = ?, category = ?, updatedAt = ?
+        SET title = ?, description = ?, imgUrl = ?, points = ?, quantity = ?, category = ?, updatedAt = ?
         WHERE id = ?
-      `).run(data.title, data.description || null, data.expiry || null, data.imgUrl || null, data.points, data.quantity, data.category || null, now, data.id);
+      `).run(data.title, data.description || null, data.imgUrl || null, data.points, data.quantity, data.category || null, now, data.id);
 
       const reward = db.prepare('SELECT * FROM rewards WHERE id = ?').get(data.id);
       return NextResponse.json(reward);

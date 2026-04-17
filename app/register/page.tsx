@@ -198,32 +198,12 @@ export default function RegisterPage() {
 
       const data = await response.json();
       if (data.success) {
-        // Send verification email
-        try {
-          const verifyResponse = await fetch('/api/email', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              action: 'sendVerificationEmail',
-              email: formData.email,
-              userName: `${formData.firstName} ${formData.lastName}`,
-            }),
-          });
-
-          console.log('Verification email sent:', verifyResponse.ok);
-        } catch (error) {
-          console.error('Error sending verification email:', error);
-        }
-
-        // Store info for verify-email page
-        localStorage.setItem('registrationEmail', formData.email);
-        localStorage.setItem('registrationName', `${formData.firstName} ${formData.lastName}`);
-        
+        // No email verification needed - set success and redirect to login
         setSuccessEmail(formData.email);
         
-        // Redirect to email verification page after 2 seconds
+        // Redirect to login page after 2 seconds
         setTimeout(() => {
-          router.push(`/verify-email?email=${encodeURIComponent(formData.email)}`);
+          router.push('/login');
         }, 2000);
       }
     } catch (error) {

@@ -2,6 +2,11 @@ import { Resend } from 'resend';
 import { EmailVerification } from '@/emails/email-verification';
 import { PasswordResetEmail } from '@/emails/password-reset-email';
 import React from 'react';
+import * as localEmail from './email-local';
+
+// Use Resend if API key is available, otherwise use local email driver
+// Set USE_LOCAL_EMAIL=true to force local mode even if API key is present
+const useLocalEmail = process.env.USE_LOCAL_EMAIL === 'true' && !process.env.RESEND_API_KEY;
 
 const resend = new Resend(process.env.RESEND_API_KEY);
 
@@ -10,10 +15,23 @@ export async function sendVerificationEmail(
   userName: string,
   verificationToken: string
 ) {
+  console.log(`\n🔧 Email Service: ${useLocalEmail ? 'LOCAL (Development Mode)' : 'RESEND (Production)'}`);
+  
+  if (useLocalEmail) {
+    return await localEmail.sendVerificationEmail(email, userName, verificationToken);
+  }
+
   const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
+  console.log('📧 Email Service - Verification Email');
+  console.log('  To:', email);
+  console.log('  From:', fromEmail);
+  console.log('  Link:', verificationLink);
+  console.log('  API Key:', process.env.RESEND_API_KEY ? '✓ Set' : '✗ Missing');
+
   try {
+    console.log('⏳ Sending email via Resend...');
     const response = await resend.emails.send({
       from: fromEmail,
       to: email,
@@ -24,10 +42,11 @@ export async function sendVerificationEmail(
       }),
     });
 
-    console.log('Verification email sent:', response);
+    console.log('✅ Verification email sent successfully');
+    console.log('   Response:', JSON.stringify(response, null, 2));
     return response;
   } catch (error) {
-    console.error('Error sending verification email:', error);
+    console.error('❌ Error sending verification email:', error);
     throw error;
   }
 }
@@ -37,10 +56,22 @@ export async function sendPasswordResetEmail(
   userName: string,
   resetToken: string
 ) {
+  console.log(`\n🔧 Email Service: ${useLocalEmail ? 'LOCAL (Development Mode)' : 'RESEND (Production)'}`);
+
+  if (useLocalEmail) {
+    return await localEmail.sendPasswordResetEmail(email, userName, resetToken);
+  }
+
   const resetLink = `${process.env.NEXT_PUBLIC_APP_URL}/reset-password?token=${resetToken}`;
   const fromEmail = process.env.RESEND_FROM_EMAIL || 'onboarding@resend.dev';
 
+  console.log('📧 Email Service - Password Reset Email');
+  console.log('  To:', email);
+  console.log('  From:', fromEmail);
+  console.log('  Link:', resetLink);
+
   try {
+    console.log('⏳ Sending password reset email via Resend...');
     const response = await resend.emails.send({
       from: fromEmail,
       to: email,
@@ -51,10 +82,11 @@ export async function sendPasswordResetEmail(
       }),
     });
 
-    console.log('Password reset email sent:', response);
+    console.log('✅ Password reset email sent successfully');
+    console.log('   Response:', JSON.stringify(response, null, 2));
     return response;
   } catch (error) {
-    console.error('Error sending password reset email:', error);
+    console.error('❌ Error sending password reset email:', error);
     throw error;
   }
 }

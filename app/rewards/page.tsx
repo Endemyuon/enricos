@@ -464,14 +464,14 @@ Please show this code to the admin for verification.`;
                       )}
                       
                       <div className="mb-3 sm:mb-4">
-                        <p className="text-xs sm:text-sm font-bold text-slate-900">Cost: {item.points} pts</p>
+                        <p className="text-xs sm:text-sm font-bold text-slate-900">Cost: {item.points} Points</p>
                         {item.expiry && <p className="text-xs text-slate-500">{item.expiry}</p>}
                       </div>
 
                       <div className="my-3 sm:my-4 flex justify-center">
                         {isEligible ? (
                           <div className="bg-green-100 border-2 border-green-500 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-center">
-                            <p className="text-green-700 font-bold text-xs sm:text-sm">✓ Eligible for Claim</p>
+                            <p className="text-green-700 font-bold text-xs sm:text-sm">Eligible for Claim</p>
                           </div>
                         ) : (
                           <div className="bg-red-100 border-2 border-red-500 rounded-full px-4 sm:px-6 py-2 sm:py-3 text-center">

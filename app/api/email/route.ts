@@ -17,10 +17,18 @@ export async function POST(request: NextRequest) {
     if (action === 'sendVerificationEmail') {
       const { userName } = body;
       
+      if (!email || !userName) {
+        return NextResponse.json(
+          { error: 'Email and userName are required' }, 
+          { status: 400 }
+        );
+      }
+
       try {
         const verificationToken = generateToken();
         const expiresAt = getTokenExpiry(24);
 
+        console.log('📨 Storing verification token in DB');
         db.prepare('INSERT INTO emailVerificationTokens (id, email, token, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?)').run(
           uuidv4(),
           email,
@@ -28,17 +36,23 @@ export async function POST(request: NextRequest) {
           expiresAt,
           new Date().toISOString()
         );
+        console.log('✓ Token stored');
 
+        console.log('📤 Calling sendVerificationEmail...');
         await sendVerificationEmail(email, userName, verificationToken);
+        console.log('✓ sendVerificationEmail completed');
 
         return NextResponse.json({ 
           success: true, 
           message: 'Verification email sent' 
         });
       } catch (error) {
-        console.error('Error sending verification email:', error);
+        console.error('❌ Error sending verification email:', error);
         return NextResponse.json(
-          { error: 'Failed to send verification email' }, 
+          { 
+            error: 'Failed to send verification email',
+            details: error instanceof Error ? error.message : String(error)
+          }, 
           { status: 500 }
         );
       }
@@ -100,10 +114,13 @@ export async function POST(request: NextRequest) {
     // Send password reset email
     if (action === 'sendPasswordReset') {
       const { userName } = body;
+      
+      console.log('🔐 Password Reset Request for:', email);
 
       // Check if user exists
       const user = db.prepare('SELECT * FROM users WHERE email = ?').get(email) as any;
       if (!user) {
+        console.log('⚠️  User not found:', email);
         // Don't reveal if email exists or not for security
         return NextResponse.json({ 
           success: true, 
@@ -115,6 +132,7 @@ export async function POST(request: NextRequest) {
         const resetToken = generateToken();
         const expiresAt = getTokenExpiry(1); // 1 hour expiry for password reset
 
+        console.log('📨 Storing password reset token in DB');
         db.prepare('INSERT INTO passwordResetTokens (id, email, token, userId, expiresAt, createdAt) VALUES (?, ?, ?, ?, ?, ?)').run(
           uuidv4(),
           email,
@@ -123,17 +141,23 @@ export async function POST(request: NextRequest) {
           expiresAt,
           new Date().toISOString()
         );
+        console.log('✓ Token stored');
 
+        console.log('📤 Calling sendPasswordResetEmail...');
         await sendPasswordResetEmail(email, userName || email.split('@')[0], resetToken);
+        console.log('✓ sendPasswordResetEmail completed');
 
         return NextResponse.json({ 
           success: true, 
           message: 'Password reset email sent' 
         });
       } catch (error) {
-        console.error('Error sending password reset email:', error);
+        console.error('❌ Error sending password reset email:', error);
         return NextResponse.json(
-          { error: 'Failed to send password reset email' }, 
+          { 
+            error: 'Failed to send password reset email',
+            details: error instanceof Error ? error.message : String(error)
+          }, 
           { status: 500 }
         );
       }
@@ -227,6 +251,48 @@ export async function POST(request: NextRequest) {
         console.error('Error resetting password:', error);
         return NextResponse.json(
           { error: 'Failed to reset password' }, 
+          { status: 500 }
+        );
+      }
+    }
+
+    // Test email endpoint
+    if (action === 'testEmail') {
+      const { testEmail } = body;
+      
+      if (!testEmail) {
+        return NextResponse.json(
+          { error: 'testEmail parameter is required' }, 
+          { status: 400 }
+        );
+      }
+
+      try {
+        const verificationToken = generateToken();
+        const verificationLink = `${process.env.NEXT_PUBLIC_APP_URL}/verify-email?token=${verificationToken}`;
+        
+        console.log('🧪 Sending test email to:', testEmail);
+        console.log('📧 Verification link:', verificationLink);
+
+        const response = await sendVerificationEmail(testEmail, 'Test User', verificationToken);
+        
+        return NextResponse.json({ 
+          success: true, 
+          message: 'Test email sent successfully',
+          details: {
+            recipient: testEmail,
+            service: 'Resend',
+            verificationLink: verificationLink,
+            response: response
+          }
+        });
+      } catch (error) {
+        console.error('❌ Error sending test email:', error);
+        return NextResponse.json(
+          { 
+            error: 'Failed to send test email',
+            details: error instanceof Error ? error.message : String(error)
+          }, 
           { status: 500 }
         );
       }

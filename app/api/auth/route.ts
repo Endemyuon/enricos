@@ -29,22 +29,22 @@ export async function POST(request: NextRequest) {
         const now = new Date().toISOString();
         const fullName = `${data.firstName} ${data.lastName}`.trim();
         
-        // Create unverified user
+        // Create verified user (no email verification needed)
         db.prepare('INSERT INTO users (id, email, password, firstName, lastName, role, emailVerified, createdAt) VALUES (?, ?, ?, ?, ?, ?, ?, ?)').run(
-          userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', 0, now
+          userId, email, hashedPassword, data.firstName || '', data.lastName || '', 'customer', 1, now
         );
         
-        // Create customer record
+        // Create customer record with 1 starting point
         db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-          userId, fullName, email, 0, now.split('T')[0], now, now
+          userId, fullName, email, 1, now.split('T')[0], now, now
         );
 
         return NextResponse.json({ 
           success: true, 
-          requiresVerification: true,
-          user: { email, role: 'customer', id: userId, name: fullName, emailVerified: false }, 
+          requiresVerification: false,
+          user: { email, role: 'customer', id: userId, name: fullName, emailVerified: true }, 
           customer: { id: userId, name: fullName, email, points: 0 },
-          message: 'Registration successful. Please check your email to verify your account.' 
+          message: 'Registration successful. You can now login.' 
         });
       } catch (e) {
         console.error('Registration error:', e);
@@ -84,13 +84,13 @@ export async function POST(request: NextRequest) {
             );
             
             db.prepare('INSERT INTO customers (id, name, email, points, joinDate, createdAt, updatedAt) VALUES (?, ?, ?, ?, ?, ?, ?)').run(
-              userId, defaultName, email, 0, now.split('T')[0], now, now
+              userId, defaultName, email, 1, now.split('T')[0], now, now
             );
             
             return NextResponse.json({ 
               success: true, 
               user: { email, role: 'customer', id: userId, name: defaultName }, 
-              customer: { id: userId, name: defaultName, email, points: 0 } 
+              customer: { id: userId, name: defaultName, email, points: 1 } 
             });
           } catch (e) {
             return NextResponse.json({ error: 'Login failed' }, { status: 500 });

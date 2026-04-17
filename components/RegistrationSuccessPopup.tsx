@@ -46,13 +46,13 @@ export function RegistrationSuccessPopup({ email, firstName }: RegistrationSucce
             Welcome, {firstName}!
           </h2>
           <p className="text-slate-600 text-center text-sm mb-6">
-            Your account has been created successfully
+            Your account has been created successfully. You can now login.
           </p>
 
           {/* Email Confirmation */}
           <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-6">
             <p className="text-slate-600 text-xs font-semibold uppercase tracking-wide mb-2">
-              Verification Sent
+              Account Email
             </p>
             <p className="text-slate-900 font-medium break-all text-sm">{email}</p>
           </div>

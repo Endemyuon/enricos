@@ -39,11 +39,12 @@ export async function POST(request: NextRequest) {
       const id = Math.random().toString(36).substr(2, 9);
       const now = new Date().toISOString();
       const joinDate = data.joinDate || new Date().toISOString().split('T')[0];
+      const initialPoints = data.points !== undefined ? data.points : 1; // Default to 1 point
 
       db.prepare(`
         INSERT INTO customers (id, name, email, phone, rfidCard, points, joinDate, createdAt, updatedAt)
         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-      `).run(id, data.name, data.email, data.phone || null, data.rfidCard || null, data.points || 0, joinDate, now, now);
+      `).run(id, data.name, data.email, data.phone || null, data.rfidCard || null, initialPoints, joinDate, now, now);
 
       const customer = db.prepare('SELECT * FROM customers WHERE id = ?').get(id);
       return NextResponse.json(customer);
