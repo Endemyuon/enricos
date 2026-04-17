@@ -10,18 +10,15 @@ sleep 2
 # Navigate to project directory
 cd "$(dirname "$0")"
 
-# Stash any local changes to avoid merge conflicts
-echo "📦 Cleaning up local changes..."
-git stash
-
-# Remove database temp files from git tracking
-git rm --cached data/enricos.sqlite-shm 2>/dev/null || true
-git rm --cached data/enricos.sqlite-wal 2>/dev/null || true
-git commit -m "Remove database temp files from tracking" 2>/dev/null || true
+# Force discard local database changes
+echo "📦 Discarding local database file changes..."
+git checkout -- data/enricos.sqlite-shm 2>/dev/null || true
+git checkout -- data/enricos.sqlite-wal 2>/dev/null || true
+git reset --hard HEAD
 
 # Pull latest code
 echo "📥 Pulling from GitHub..."
-git pull origin main
+git pull origin main --force
 
 # Install dependencies
 echo "📦 Installing packages..."
