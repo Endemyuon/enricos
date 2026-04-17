@@ -43,6 +43,5 @@ next-env.d.ts
 
 # database
 # SQLite database files are now tracked for backup
-# /data/*.sqlite
-# /data/*.sqlite-shm
-# /data/*.sqlite-wal
+/data/*.sqlite-shm
+/data/*.sqlite-wal
